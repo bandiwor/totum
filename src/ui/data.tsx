@@ -78,7 +78,7 @@ export function Stat({
       </span>
       {delta && (
         <span class={cx('ui-stat__delta', `is-${tone}`)}>
-          {delta.direction !== 'flat' && <Icon name={delta.direction === 'up' ? 'chevronRight' : 'chevronDown'} size={12} />}
+          {delta.direction !== 'flat' && <Icon name={delta.direction === 'up' ? 'trendUp' : 'trendDown'} size={12} />}
           {delta.text}
         </span>
       )}

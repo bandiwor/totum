@@ -38,6 +38,8 @@ const ICONS = {
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
   navigation: '<path d="m3 11 19-9-9 19-2-8-8-2z"/>',
+  trendUp: '<path d="M7 17 17 7M7 7h10v10"/>',
+  trendDown: '<path d="m7 7 10 10M17 7v10H7"/>',
   sparkles: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
 } as const;
 

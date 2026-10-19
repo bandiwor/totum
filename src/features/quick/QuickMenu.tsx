@@ -2,10 +2,16 @@ import { signal } from '@preact/signals';
 import { useEffect, useState } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
 import { registry, type QuickAction, type QuickActionContext } from '@/core/registry';
+import { path } from '@/core/router';
 import { cx, Icon } from '@/ui';
 
 /** The "super button" menu: a few huge tiles, two taps to anything. */
 export const quickMenuOpen = signal(false);
+
+// Any navigation (e.g. "start workout" from inside the menu) closes the menu.
+path.subscribe(() => {
+  quickMenuOpen.value = false;
+});
 
 export function openQuickMenu(): void {
   haptic('medium');
