@@ -1,9 +1,10 @@
 import type { ComponentChildren } from 'preact';
 import { useId } from 'preact/hooks';
-import { formatTime, isISODate, parseTime, type ISODate, type Minutes } from '@/core/date';
+import { formatDateLong, formatTime, parseTime, type ISODate, type Minutes } from '@/core/date';
 import { haptic } from '@/core/haptics';
 import { Chip } from './inputs';
-import { cx } from './primitives';
+import { openDatePicker } from './Calendar';
+import { cx, Icon } from './primitives';
 import { t } from '@/core/i18n';
 
 // ── Palette ────────────────────────────────────────────────────────────────
@@ -114,16 +115,21 @@ export function TimeField({ label, value, onChange }: { label?: string; value: M
   );
 }
 
+/** Shows the date as text; tapping opens the app's own calendar sheet (native date inputs are unreliable in iOS PWAs). */
 export function DateField({
   label,
   value,
   onChange,
+  clearable,
 }: {
   label?: string;
   value: ISODate | null;
   onChange: (d: ISODate | null) => void;
+  /** Allows "no date". */
+  clearable?: boolean;
 }) {
   const id = useId();
+  const text = value ? formatDateLong(value) : t('time.noDate');
   return (
     <div class="ui-field">
       {label && (
@@ -131,16 +137,18 @@ export function DateField({
           {label}
         </label>
       )}
-      <input
+      <button
         id={id}
-        type="date"
-        class="ui-field__input ui-field__native"
-        value={value ?? ''}
-        onChange={(e) => {
-          const raw = e.currentTarget.value;
-          onChange(isISODate(raw) ? raw : null);
+        type="button"
+        class={cx('ui-field__input ui-field__date', !value && 'is-empty')}
+        onClick={() => {
+          haptic('light');
+          openDatePicker(value, onChange, { ...(label ? { title: label } : {}), clearable: clearable ?? false });
         }}
-      />
+      >
+        <span>{text}</span>
+        <Icon name="calendar" size={18} />
+      </button>
     </div>
   );
 }

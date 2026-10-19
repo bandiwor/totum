@@ -15,7 +15,8 @@ export interface SearchHit {
 
 /** Case- and ё-insensitive search over title, body, tags and field values; every word must match. */
 export function searchNotes(list: readonly Note[], query: string): SearchHit[] {
-  const words = norm(query).split(/\s+/).filter(Boolean);
+  // "#идеи" finds the tag "идеи": tags are stored without the hash.
+  const words = norm(query).split(/\s+/).map((w) => w.replace(/^#+/, '')).filter(Boolean);
   if (words.length === 0) return [];
   const hits: SearchHit[] = [];
   for (const note of list) {
@@ -66,7 +67,44 @@ export function allTags(list: readonly Note[]): string[] {
   return [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ru')).map(([t]) => t);
 }
 
-/** "#чтение, идеи" → ["чтение", "идеи"]. */
+/** "#Чтение, личный  рост" → ["чтение", "личный рост"]: only commas separate tags. */
 export function parseTags(input: string): string[] {
-  return [...new Set(input.split(/[,\s]+/).map((t) => t.replace(/^#/, '').trim().toLowerCase()).filter(Boolean))];
+  const tags = input.split(',').map((t) => t.trim().replace(/^#+/, '').trim().replace(/\s+/g, ' ').toLowerCase());
+  return [...new Set(tags.filter(Boolean))];
+}
+
+/** Nothing worth keeping: no text, no field values, no tags or flags. */
+export function isNoteEmpty(n: Pick<Note, 'title' | 'body' | 'values' | 'tags' | 'pinned' | 'revisit'>): boolean {
+  return (
+    !n.title.trim() &&
+    !n.body.trim() &&
+    n.tags.length === 0 &&
+    !n.pinned &&
+    !n.revisit &&
+    Object.values(n.values).every((v) => v === null || v === '' || v === false)
+  );
+}
+
+// ── Collection schema changes ──────────────────────────────────────────────
+
+export const isSortableField = (f: FieldDef): boolean => f.type === 'rating' || f.type === 'number';
+
+/** Fields that were removed or changed type: their stored values no longer fit. */
+export function staleFieldIds(before: readonly FieldDef[], after: readonly FieldDef[]): string[] {
+  return before.filter((f) => after.find((g) => g.id === f.id)?.type !== f.type).map((f) => f.id);
+}
+
+/** A field sort survives only while its field exists and is still sortable. */
+export function validSort(sort: SortMode, fields: readonly FieldDef[]): SortMode {
+  if (!sort.startsWith('field:')) return sort;
+  const field = fields.find((f) => f.id === sort.slice(6));
+  return field && isSortableField(field) ? sort : 'updated';
+}
+
+/** `values` without the given fields, or null when there's nothing to drop. */
+export function dropValues(values: Note['values'], ids: readonly string[]): Note['values'] | null {
+  if (!ids.some((id) => id in values)) return null;
+  const next = { ...values };
+  for (const id of ids) delete next[id];
+  return next;
 }

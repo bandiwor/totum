@@ -6,12 +6,36 @@ import type { DataSnapshot } from './store';
  * stored data changes. Old backups are migrated step by step on import, and the
  * local database is migrated on boot.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 type Migration = (data: DataSnapshot) => DataSnapshot;
 
 /** migrations[n] upgrades data from version n+1 to n+2. */
-const migrations: Migration[] = [];
+const migrations: Migration[] = [
+  // 1 → 2: sleep entries stored clock minutes under the morning date; now they are
+  // sessions with absolute timestamps (naps and any-time sleep).
+  (data) => {
+    const old = data.collections.sleepLog;
+    if (!old) return data;
+    const at = (date: string, m: number): number => {
+      const [y, mo, d] = date.split('-').map(Number) as [number, number, number];
+      return new Date(y, mo - 1, d, 0, m).getTime();
+    };
+    const sleepLog = old.flatMap((raw) => {
+      const e = raw as { id: string; createdAt: number; updatedAt: number; date: string; plannedBed: number; plannedWake: number; bedAt: number | null; asleepAt: number | null; wakeAt: number | null };
+      // Evening times belong to the day before the morning the night was filed under.
+      const evening = (m: number | null): number | null => {
+        if (m === null) return null;
+        const [y, mo, d] = e.date.split('-').map(Number) as [number, number, number];
+        return m >= 720 ? new Date(y, mo - 1, d - 1, 0, m).getTime() : at(e.date, m);
+      };
+      const bed = evening(e.bedAt) ?? evening(e.asleepAt);
+      if (bed === null) return [];
+      return [{ id: e.id, createdAt: e.createdAt, updatedAt: e.updatedAt, plannedBed: e.plannedBed, plannedWake: e.plannedWake, bedAt: bed, asleepAt: evening(e.asleepAt), wakeAt: e.wakeAt === null ? null : at(e.date, e.wakeAt) }];
+    });
+    return { ...data, collections: { ...data.collections, sleepLog } };
+  },
+];
 
 export function migrate(data: DataSnapshot, fromVersion: number): DataSnapshot {
   if (fromVersion > SCHEMA_VERSION) {

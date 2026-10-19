@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { toISODate } from '@/core/date';
-import { allTags, parseTags, searchNotes, sortNotes } from './logic';
+import { allTags, dropValues, isNoteEmpty, parseTags, searchNotes, sortNotes, staleFieldIds, validSort } from './logic';
+import type { FieldDef } from './model';
 import type { Note } from './model';
 
 const note = (o: Partial<Note>): Note => ({
@@ -21,6 +22,8 @@ describe('notes', () => {
     expect(searchNotes(list, 'книги привычка').map((h) => h.note.id)).toEqual(['a']);
     expect(searchNotes(list, 'книги шафран')).toEqual([]);
     expect(searchNotes(list, 'елка').map((h) => h.note.id)).toEqual(['c']);
+    expect(searchNotes(list, '#книги').map((h) => h.note.id)).toEqual(['a']);
+    expect(searchNotes(list, '#')).toEqual([]);
   });
 
   it('sorts pinned first, then by a field', () => {
@@ -30,7 +33,29 @@ describe('notes', () => {
   });
 
   it('tags', () => {
-    expect(parseTags('#Чтение, идеи  идеи')).toEqual(['чтение', 'идеи']);
+    expect(parseTags('#Чтение, идеи, ИДЕИ')).toEqual(['чтение', 'идеи']);
+    expect(parseTags('  личный   рост , #Книги,, ')).toEqual(['личный рост', 'книги']);
+    expect(parseTags('##a b')).toEqual(['a b']);
+    expect(parseTags('')).toEqual([]);
     expect(allTags([note({ tags: ['a', 'b'] }), note({ tags: ['b'] })])).toEqual(['b', 'a']);
+  });
+
+  it('empty notes', () => {
+    expect(isNoteEmpty(note({ title: ' ', values: { a: null, b: false } }))).toBe(true);
+    expect(isNoteEmpty(note({ tags: ['x'] }))).toBe(false);
+    expect(isNoteEmpty(note({ pinned: true }))).toBe(false);
+    expect(isNoteEmpty(note({ revisit: true }))).toBe(false);
+    expect(isNoteEmpty(note({ values: { a: 0 } }))).toBe(false);
+  });
+
+  it('collection field changes', () => {
+    const f = (id: string, type: FieldDef['type']): FieldDef => ({ id, name: id, type, options: [] });
+    expect(staleFieldIds([f('a', 'text'), f('b', 'number'), f('c', 'rating')], [f('a', 'text'), f('b', 'text')])).toEqual(['b', 'c']);
+    expect(validSort('field:b', [f('b', 'text')])).toBe('updated');
+    expect(validSort('field:b', [f('b', 'number')])).toBe('field:b');
+    expect(validSort('field:x', [])).toBe('updated');
+    expect(validSort('date', [])).toBe('date');
+    expect(dropValues({ a: 1, b: 'x' }, ['b', 'z'])).toEqual({ a: 1 });
+    expect(dropValues({ a: 1 }, ['z'])).toBeNull();
   });
 });

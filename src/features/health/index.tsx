@@ -6,14 +6,14 @@ import { healthTab, type HealthTab } from '@/features/nutrition/healthTab';
 import { NutritionView } from '@/features/nutrition/NutritionView';
 import { SleepView } from '@/features/sleep/SleepView';
 import { TrainingView } from '@/features/training/TrainingView';
-import { Page, SegmentedControl } from '@/ui';
+import { Page, SegmentedControl, type IconName } from '@/ui';
 
 /** Segments of the Health tab and the modules that keep each one visible. */
-const SEGMENTS: readonly { id: HealthTab; module: ModuleSpec }[] = [
-  { id: 'training', module: 'training' },
-  { id: 'food', module: ['nutrition', 'water', 'intake'] },
-  { id: 'body', module: 'body' },
-  { id: 'sleep', module: 'sleep' },
+const SEGMENTS: readonly { id: HealthTab; icon: IconName; module: ModuleSpec }[] = [
+  { id: 'training', icon: 'dumbbell', module: 'training' },
+  { id: 'food', icon: 'apple', module: ['nutrition', 'water', 'intake'] },
+  { id: 'body', icon: 'bodyScale', module: 'body' },
+  { id: 'sleep', icon: 'moon', module: 'sleep' },
 ];
 
 function HealthScreen() {
@@ -26,7 +26,7 @@ function HealthScreen() {
       scrollKey={current}
       toolbar={
         visible.length > 1 ? (
-          <SegmentedControl options={visible.map((s) => ({ value: s.id, label: t(`nutrition.tabs.${s.id}`) }))} value={current} onChange={(v) => (healthTab.value = v)} />
+          <SegmentedControl options={visible.map((s) => ({ value: s.id, label: t(`nutrition.tabs.${s.id}`), icon: s.icon }))} value={current} onChange={(v) => (healthTab.value = v)} />
         ) : undefined
       }
     >

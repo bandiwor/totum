@@ -36,6 +36,10 @@ export const common = {
 };
 
 export const time = {
+  prevMonth: 'Previous month',
+  nextMonth: 'Next month',
+  pickDate: 'Date',
+  noDate: 'No date',
   hm: '{h} h {m} min',
   h: '{h} h',
   m: '{m} min',

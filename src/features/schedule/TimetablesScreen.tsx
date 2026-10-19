@@ -100,7 +100,7 @@ export function TimetableEditor({ params }: RouteProps) {
             <DateField value={tt.startDate} onChange={(d) => d && timetables.update(tt.id, { startDate: d })} />
           </Field>
           <Field label={t('common.end')}>
-            <DateField value={tt.endDate} onChange={(d) => timetables.update(tt.id, { endDate: d })} />
+            <DateField clearable value={tt.endDate} onChange={(d) => timetables.update(tt.id, { endDate: d })} />
           </Field>
         </div>
       </Section>

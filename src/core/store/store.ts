@@ -3,6 +3,7 @@ import type { GenericSchema } from 'valibot';
 import type { PlainKey } from '../i18n';
 import { newId } from '../id';
 import { db, type StoredRecord } from './idb';
+import { migrate, SCHEMA_VERSION } from './migrations';
 
 /** Base fields of every stored entity. */
 export interface Entity {
@@ -15,6 +16,9 @@ export type Draft<T extends Entity> = Omit<T, keyof Entity> & { id?: string };
 export type Patch<T extends Entity> = Partial<Omit<T, keyof Entity>>;
 
 const DOC_COLLECTION = '$doc';
+/** Holds the schema version of the local database. */
+const META_COLLECTION = '$meta';
+const VERSION_ID = 'schemaVersion';
 
 // ── Write queue: in-memory state updates synchronously, IndexedDB follows. ──
 
@@ -197,8 +201,29 @@ function distribute(records: readonly StoredRecord[]): void {
   });
 }
 
+function toSnapshot(records: readonly StoredRecord[]): DataSnapshot {
+  const out: DataSnapshot = { collections: {}, docs: {} };
+  for (const r of records) {
+    if (r.c === META_COLLECTION) continue;
+    if (r.c === DOC_COLLECTION) out.docs[r.id] = r.v;
+    else (out.collections[r.c] ??= []).push(r.v);
+  }
+  return out;
+}
+
+/** Loads everything; data written by an older version is migrated first. */
 export async function loadAll(): Promise<void> {
-  distribute(await (await db()).getAll('records'));
+  const records = await (await db()).getAll('records');
+  const meta = records.find((r) => r.c === META_COLLECTION && r.id === VERSION_ID);
+  const data = records.filter((r) => r.c !== META_COLLECTION);
+  // Databases created before versioning existed are version 1.
+  const version = typeof meta?.v === 'number' ? meta.v : data.length > 0 ? 1 : SCHEMA_VERSION;
+  if (version < SCHEMA_VERSION) {
+    await replaceAll(migrate(toSnapshot(data), version));
+    return;
+  }
+  distribute(data);
+  if (!meta) persist(async () => (await db()).put('records', { c: META_COLLECTION, id: VERSION_ID, v: SCHEMA_VERSION }));
 }
 
 export function snapshotAll(): DataSnapshot {
@@ -216,10 +241,12 @@ export async function replaceAll(data: DataSnapshot): Promise<void> {
     for (const v of values) records.push({ c, id: (v as Entity).id, v });
   }
   for (const [id, v] of Object.entries(data.docs)) records.push({ c: DOC_COLLECTION, id, v });
+  const meta: StoredRecord = { c: META_COLLECTION, id: VERSION_ID, v: SCHEMA_VERSION };
 
   const tx = (await db()).transaction('records', 'readwrite');
   await tx.store.clear();
   for (const r of records) void tx.store.put(r);
+  void tx.store.put(meta);
   await tx.done;
   distribute(records);
 }

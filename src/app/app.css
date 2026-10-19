@@ -1,9 +1,15 @@
 /* ── Shell ── */
 .app {
-  /* Fixed, not height:100% — iOS standalone mode otherwise leaves a gap under the tab bar. */
   position: fixed;
   inset: 0;
   overflow: hidden;
+  /* Containing block for fixed overlays (sheets, quick menu, toasts), so they follow --app-h. */
+  transform: translateZ(0);
+}
+/* Set by core/native.ts in iOS standalone mode, where the viewport is shorter than the screen. */
+:root[style*='--app-h'] .app {
+  bottom: auto;
+  height: var(--app-h);
 }
 .app__stage {
   position: absolute;
@@ -52,7 +58,6 @@
 
 /* ── Tab bar ── */
 .tabbar {
-  --tab-pad-x: 14px;
   position: absolute;
   left: 0;
   right: 0;
@@ -67,6 +72,7 @@
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   backdrop-filter: blur(20px) saturate(1.4);
   border-top: 1px solid var(--border);
+  touch-action: pan-y;
 }
 /* One column wide; the circle inside sits behind the active icon and slides between tabs. */
 .tabbar__indicator {
@@ -88,6 +94,15 @@
   margin-left: -20px;
   border-radius: 50%;
   background: var(--text);
+}
+.tabbar.is-pressed .tabbar__blob {
+  scale: 1.1;
+}
+.tabbar.is-dragging .tabbar__indicator {
+  transition: none;
+}
+.tabbar__blob {
+  transition: scale 220ms var(--ease-out);
 }
 .tabbar__blob.is-moving {
   animation: tab-squash 460ms var(--ease-emph);
@@ -123,6 +138,10 @@
 }
 .ui-tab.is-active .ui-tab__icon {
   color: var(--bg);
+}
+/* Mid-drag the circle only partly covers the icon — keep it readable until it's centred. */
+.ui-tab.is-passing .ui-tab__icon {
+  color: var(--text);
 }
 .ui-tab .ui-icon {
   transition: transform 320ms var(--ease-emph);
@@ -1414,5 +1433,15 @@
   color: var(--text-2);
 }
 .sleep-card__text:last-child {
+  margin-bottom: 0;
+}
+.sleep-card__last {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: var(--space-3);
+  text-align: left;
+}
+.sleep-card__last .sleep-card__text {
   margin-bottom: 0;
 }

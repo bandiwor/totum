@@ -80,6 +80,16 @@ export const activeCollections = computed(() =>
   noteCollections.all.value.filter((c) => !c.archived).sort((a, b) => a.createdAt - b.createdAt),
 );
 
+export const archivedCollections = computed(() =>
+  noteCollections.all.value.filter((c) => c.archived).sort((a, b) => a.createdAt - b.createdAt),
+);
+
+/** Notes outside archived collections — what search and "revisit" look at. */
+export const visibleNotes = computed(() => {
+  const archived = new Set(archivedCollections.value.map((c) => c.id));
+  return archived.size ? notes.all.value.filter((n) => !archived.has(n.collectionId)) : notes.all.value;
+});
+
 export const notesByCollection = computed(() => {
   const map = new Map<string, Note[]>();
   for (const n of notes.all.value) {
@@ -90,4 +100,4 @@ export const notesByCollection = computed(() => {
   return map;
 });
 
-export const revisitNotes = computed(() => notes.all.value.filter((n) => n.revisit).sort((a, b) => b.updatedAt - a.updatedAt));
+export const revisitNotes = computed(() => visibleNotes.value.filter((n) => n.revisit).sort((a, b) => b.updatedAt - a.updatedAt));

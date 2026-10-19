@@ -110,7 +110,7 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
       <Field label={t('tasks.when')}>
         <ChoiceChips options={dateOptions} value={dateMode} onChange={setDateMode} />
       </Field>
-      {dateMode === 'pick' && <DateField value={d.date} onChange={(date: ISODate | null) => patch({ date })} />}
+      {dateMode === 'pick' && <DateField clearable value={d.date} onChange={(date: ISODate | null) => patch({ date })} />}
       {d.date !== null && !d.lesson && (
         <List>
           <ListRow

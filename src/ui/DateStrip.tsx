@@ -2,6 +2,7 @@ import { addDays, diffDays, formatMonth, startOfWeek, today, toJSDate, weekdaySh
 import { haptic } from '@/core/haptics';
 import { cx, Icon } from './primitives';
 import { t } from '@/core/i18n';
+import { openDatePicker } from './Calendar';
 
 
 /** Week of days with prev/next; `marks` puts a dot under a day. */
@@ -28,9 +29,10 @@ export function DateStrip({
         <button type="button" class="ui-strip__nav" aria-label={t('time.prevWeek')} onClick={() => select(addDays(value, -7))}>
           <Icon name="chevronLeft" size={18} />
         </button>
-        <span class="ui-strip__month">
+        <button type="button" class="ui-strip__month" onClick={() => openDatePicker(value, (d) => d && select(d))}>
           {monthLabel} {toJSDate(monday).getFullYear()}
-        </span>
+          <Icon name="chevronDown" size={16} />
+        </button>
         {diffDays(now, value) !== 0 && (
           <button type="button" class="ui-strip__today" onClick={() => select(now)}>
             {t('common.today')}

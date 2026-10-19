@@ -128,6 +128,12 @@ export function formatDayMonth(date: ISODate): string {
   return fmt({ day: 'numeric', month: 'long' }).format(toJSDate(date));
 }
 
+/** «Пн, 19 октября» (+ year when it isn't the current one). */
+export function formatDateLong(date: ISODate): string {
+  const sameYear = date.slice(0, 4) === today().slice(0, 4);
+  return capitalize(fmt({ weekday: 'short', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) }).format(toJSDate(date)));
+}
+
 export function formatWeekday(date: ISODate, style: 'short' | 'long' = 'short'): string {
   return fmt({ weekday: style }).format(toJSDate(date));
 }

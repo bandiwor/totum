@@ -265,7 +265,7 @@ doc "bodyProfile" — used to compute calorie/macro/water targets.
 - waterMl: number | null — daily water target in ml; null = computed
 (Current weight is a log entry in "weightLog"; normally don't generate it. If I explicitly give my current weight, you may add one item { "id", "date": today, "kg": number }.)
 
-Log collections "foodLog", "intakeLog", "waterLog", "weightLog" hold history — do not generate them. The same goes for "sleepLog" (nights: when I went to bed, fell asleep, woke up); the sleep plan itself is settings.dayEnd / settings.dayStart.
+Log collections "foodLog", "intakeLog", "waterLog", "weightLog" hold history — do not generate them. The same goes for "sleepLog" (sleep sessions at any time of day: went to bed, fell asleep, woke up — epoch ms); the sleep plan itself is settings.dayEnd / settings.dayStart.
 
 =====================================================================
 MONEY (module "money")

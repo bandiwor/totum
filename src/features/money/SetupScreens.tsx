@@ -71,7 +71,7 @@ function RecurringForm({ rule, close }: { rule: Recurring | null; close: () => v
         <ListRow title={t('money.hasEnd')} trailing={<Switch label={t('money.hasEnd')} checked={d.endDate !== null} onChange={(on) => patch({ endDate: on ? addDays(d.anchor, 90) : null })} />} />
         {rule && <ListRow title={t('money.active')} trailing={<Switch label={t('money.active')} checked={d.active} onChange={(active) => patch({ active })} />} />}
       </List>
-      {d.endDate !== null && <DateField label={t('money.endDate')} value={d.endDate} onChange={(endDate: ISODate | null) => patch({ endDate })} />}
+      {d.endDate !== null && <DateField clearable label={t('money.endDate')} value={d.endDate} onChange={(endDate: ISODate | null) => patch({ endDate })} />}
       <SheetActions>
         <Button
           variant="primary"

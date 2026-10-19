@@ -236,6 +236,7 @@
   padding: 3px;
   border-radius: var(--radius-md);
   background: var(--surface-2);
+  touch-action: pan-y;
 }
 .ui-seg__thumb {
   position: absolute;
@@ -246,7 +247,19 @@
   border-radius: calc(var(--radius-md) - 3px);
   background: var(--surface-3);
   transform: translateX(calc(100% * var(--seg-index)));
-  transition: transform var(--dur-base) var(--ease-out);
+  transition: transform 380ms var(--ease-emph), scale 200ms var(--ease-out);
+}
+/* Pressed thumb shrinks a little, like iOS; while dragging it follows the finger 1:1. */
+.ui-seg.is-pressed .ui-seg__thumb {
+  scale: 0.94;
+}
+.ui-seg.is-dragging .ui-seg__thumb {
+  transition: scale 200ms var(--ease-out);
+}
+.ui-seg__item--icon {
+  display: grid;
+  place-items: center;
+  min-height: 40px;
 }
 .ui-seg__item {
   position: relative;
@@ -808,6 +821,11 @@
 }
 .ui-strip__month {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  text-align: left;
   font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text-2);
@@ -1042,4 +1060,85 @@
   transition: box-shadow 200ms var(--ease-out);
   box-shadow: var(--shadow-float);
   border-radius: var(--radius-md);
+}
+
+/* ── Date field & calendar ── */
+.ui-field__date {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--text);
+  text-align: left;
+}
+.ui-field__date .ui-icon {
+  color: var(--text-3);
+}
+.ui-field__date.is-empty {
+  color: var(--text-3);
+}
+.ui-cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.ui-cal__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+.ui-cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.ui-cal__wd {
+  padding-bottom: var(--space-1);
+  text-align: center;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-3);
+}
+.ui-cal__days.is-next {
+  animation: cal-next 300ms var(--ease-enter) both;
+}
+.ui-cal__days.is-prev {
+  animation: cal-prev 300ms var(--ease-enter) both;
+}
+@keyframes cal-next {
+  from { opacity: 0; transform: translateX(24px); }
+}
+@keyframes cal-prev {
+  from { opacity: 0; transform: translateX(-24px); }
+}
+.ui-cal__day {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.ui-cal__day:active {
+  transform: scale(0.9);
+}
+.ui-cal__day.is-outside {
+  color: var(--text-3);
+  opacity: 0.5;
+}
+.ui-cal__day.is-today {
+  color: var(--accent);
+}
+.ui-cal__day.is-selected {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.ui-cal__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }

@@ -1,5 +1,6 @@
-import { useState } from 'preact/hooks';
-import { isISODate } from '@/core/date';
+import { batch } from '@preact/signals';
+import { useEffect, useState } from 'preact/hooks';
+import { formatDateLong, isISODate } from '@/core/date';
 import { haptic } from '@/core/haptics';
 import { t } from '@/core/i18n';
 import { newId } from '@/core/id';
@@ -13,17 +14,18 @@ import {
   Field,
   Form,
   Icon,
-
   List,
   ListRow,
   openSheet,
+  ReorderList,
   SheetActions,
   Switch,
   TextField,
   type ColorKey,
   type IconName,
 } from '@/ui';
-import { FIELD_TYPES, noteCollections, notes, type FieldDef, type FieldType, type FieldValue, type NoteCollection } from './model';
+import { dropValues, staleFieldIds, validSort } from './logic';
+import { FIELD_TYPES, noteCollections, notes, type FieldDef, type FieldType, type FieldValue, type NoteCollection, type SortMode } from './model';
 
 export const COLLECTION_ICONS: readonly IconName[] = ['notes', 'star', 'bookmark', 'sparkles', 'health', 'moon', 'tag', 'utensils', 'dumbbell', 'coins'];
 
@@ -80,19 +82,9 @@ export function FieldInput({ field, value, onChange }: { field: FieldDef; value:
         </List>
       );
     case 'date':
-      return <DateField label={field.name} value={typeof value === 'string' && isISODate(value) ? value : null} onChange={onChange} />;
+      return <DateField clearable label={field.name} value={typeof value === 'string' && isISODate(value) ? value : null} onChange={onChange} />;
     case 'number':
-      return (
-        <TextField
-          label={field.name}
-          inputMode="decimal"
-          value={value === null || value === undefined ? '' : String(value)}
-          onValue={(v) => {
-            const n = Number(v.replace(',', '.'));
-            onChange(v.trim() === '' ? null : Number.isFinite(n) ? n : value);
-          }}
-        />
-      );
+      return <NumberInput label={field.name} value={typeof value === 'number' ? value : null} onChange={onChange} />;
     case 'link':
       return (
         <div class="note-link">
@@ -110,11 +102,41 @@ export function FieldInput({ field, value, onChange }: { field: FieldDef; value:
   }
 }
 
+/** "4,5" → 4.5, "" → null, "-" / "4.5.1" → undefined (not a number yet). */
+const parseNumber = (raw: string): number | null | undefined => {
+  const s = raw.trim().replace(',', '.');
+  if (!s) return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+/** Keeps the raw text so half-typed numbers ("4,", "-") survive re-renders. */
+function NumberInput({ label, value, onChange }: { label: string; value: number | null; onChange: (v: number | null) => void }) {
+  const [raw, setRaw] = useState(value === null ? '' : String(value));
+  // Follow outside changes, but not our own echo of what's typed.
+  useEffect(() => {
+    if (parseNumber(raw) !== value) setRaw(value === null ? '' : String(value));
+  }, [value]);
+  return (
+    <TextField
+      label={label}
+      inputMode="decimal"
+      value={raw}
+      onValue={(v) => {
+        setRaw(v);
+        const n = parseNumber(v);
+        if (n !== undefined && n !== value) onChange(n);
+      }}
+    />
+  );
+}
+
 /** Compact read-only value for lists. */
 export function fieldDisplay(field: FieldDef, value: FieldValue | undefined): string | null {
   if (value === null || value === undefined || value === '') return null;
   if (field.type === 'checkbox') return value ? field.name : null;
   if (field.type === 'rating') return null;
+  if (field.type === 'date' && typeof value === 'string' && isISODate(value)) return formatDateLong(value);
   return String(value);
 }
 
@@ -134,7 +156,7 @@ function templateFields(tpl: Template): FieldDef[] {
     case 'diary':
       return [f('mood', 'rating')];
     case 'book':
-      return [f('chapter', 'text')];
+      return [f('author', 'text'), f('chapter', 'text'), f('rating', 'rating')];
     case 'rated':
       return [f('rating', 'rating'), f('brand', 'text'), f('season', 'choice', t('notes.seasons').split(','))];
     case 'blank':
@@ -143,6 +165,9 @@ function templateFields(tpl: Template): FieldDef[] {
 }
 
 const TEMPLATE_ICONS: Record<Template, IconName> = { diary: 'moon', book: 'notes', rated: 'star', blank: 'bookmark' };
+
+/** The name a template suggests; a blank collection starts unnamed. */
+const templateName = (tpl: Template): string => (tpl === 'blank' ? '' : t(`notes.templates.${tpl}`));
 
 function FieldForm({ field, onSave, onDelete, close }: { field: FieldDef | null; onSave: (f: FieldDef) => void; onDelete?: () => void; close: () => void }) {
   const [name, setName] = useState(field?.name ?? '');
@@ -185,26 +210,27 @@ function FieldForm({ field, onSave, onDelete, close }: { field: FieldDef | null;
 
 function CollectionForm({ collection, close }: { collection: NoteCollection | null; close: () => void }) {
   const [template, setTemplate] = useState<Template>('diary');
-  const [name, setName] = useState(collection?.name ?? t('notes.templates.diary'));
+  const [name, setName] = useState(collection?.name ?? templateName('diary'));
   const [icon, setIcon] = useState(collection?.icon ?? 'moon');
   const [color, setColor] = useState<string>(collection?.color ?? 'c1');
   const [fields, setFields] = useState<FieldDef[]>(collection?.fields ?? templateFields('diary'));
+  const [archived, setArchived] = useState(collection?.archived ?? false);
 
   const pickTemplate = (tpl: Template): void => {
     setTemplate(tpl);
-    setName(t(`notes.templates.${tpl}`));
+    // Keep a name the user typed; replace only the previous template's suggestion.
+    setName((cur) => (!cur.trim() || cur === templateName(template) ? templateName(tpl) : cur));
     setIcon(TEMPLATE_ICONS[tpl]);
     setFields(templateFields(tpl));
   };
 
-  const editField = (index: number | null): void => {
-    const field = index === null ? null : (fields[index] ?? null);
+  const editField = (field: FieldDef | null): void => {
     void openSheet(
       (c) => (
         <FieldForm
           field={field}
-          onSave={(f) => setFields((cur) => (index === null ? [...cur, f] : cur.map((x, i) => (i === index ? f : x))))}
-          {...(index !== null ? { onDelete: () => setFields((cur) => cur.filter((_, i) => i !== index)) } : {})}
+          onSave={(f) => setFields((cur) => (field ? cur.map((x) => (x.id === f.id ? f : x)) : [...cur, f]))}
+          {...(field ? { onDelete: () => setFields((cur) => cur.filter((x) => x.id !== field.id)) } : {})}
           close={c}
         />
       ),
@@ -213,11 +239,24 @@ function CollectionForm({ collection, close }: { collection: NoteCollection | nu
   };
 
   const save = (): void => {
-    const data = { name: name.trim(), icon, color, fields };
+    const data = { name: name.trim(), icon, color, fields, archived };
     if (!data.name) return;
-    if (collection) noteCollections.update(collection.id, data);
-    else {
-      const created = noteCollections.add({ ...data, sort: 'updated', archived: false });
+    if (collection) {
+      // Values of removed or retyped fields would linger unseen (and break sorting).
+      const stale = staleFieldIds(collection.fields, fields);
+      const sort = validSort(collection.sort, fields);
+      batch(() => {
+        noteCollections.update(collection.id, sort === collection.sort ? data : { ...data, sort });
+        if (stale.length === 0) return;
+        for (const n of notes.all.value) {
+          if (n.collectionId !== collection.id) continue;
+          const values = dropValues(n.values, stale);
+          if (values) notes.update(n.id, { values });
+        }
+      });
+    } else {
+      const sort: SortMode = template === 'diary' ? 'date' : 'updated';
+      const created = noteCollections.add({ ...data, sort });
       close();
       navigate(`notes/c/${created.id}`);
       return;
@@ -246,16 +285,23 @@ function CollectionForm({ collection, close }: { collection: NoteCollection | nu
       <ColorPicker value={color} onChange={(c: ColorKey) => setColor(c)} />
       <Field label={t('notes.fields')} hint={t('notes.fieldsHint')}>
         {fields.length > 0 && (
-          <List>
-            {fields.map((f, i) => (
-              <ListRow key={f.id} title={f.name} subtitle={t(`notes.fieldTypes.${f.type}`)} chevron onClick={() => editField(i)} />
-            ))}
-          </List>
+          <ReorderList
+            items={fields}
+            keyOf={(f) => f.id}
+            gripLabel={t('common.reorder')}
+            onReorder={(ids) => setFields((cur) => ids.map((id) => cur.find((f) => f.id === id)).filter((f): f is FieldDef => !!f))}
+            render={(f) => <ListRow title={f.name} subtitle={t(`notes.fieldTypes.${f.type}`)} onClick={() => editField(f)} />}
+          />
         )}
         <Button size="sm" variant="ghost" icon="plus" onClick={() => editField(null)}>
           {t('notes.addField')}
         </Button>
       </Field>
+      {collection && (
+        <List>
+          <ListRow title={t('common.archived')} subtitle={t('notes.archivedHint')} trailing={<Switch label={t('common.archive')} checked={archived} onChange={setArchived} />} />
+        </List>
+      )}
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!name.trim()} feedback={false} onClick={save}>
           {t('common.save')}
@@ -267,8 +313,10 @@ function CollectionForm({ collection, close }: { collection: NoteCollection | nu
             icon="trash"
             onClick={async () => {
               if (await confirm({ title: t('notes.deleteCollection'), message: t('notes.deleteCollectionText'), confirmLabel: t('common.delete'), danger: true })) {
-                for (const n of notes.all.value) if (n.collectionId === collection.id) notes.remove(n.id);
-                noteCollections.remove(collection.id);
+                batch(() => {
+                  for (const n of notes.all.value) if (n.collectionId === collection.id) notes.remove(n.id);
+                  noteCollections.remove(collection.id);
+                });
                 close();
                 navigate('notes', { replace: true });
               }

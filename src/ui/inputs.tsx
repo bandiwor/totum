@@ -3,6 +3,8 @@ import { useId } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
 import { fx, type FxKind } from '@/core/fx';
 import { cx, Icon } from './primitives';
+import type { IconName } from './icons';
+import { useSlideSelect } from './slideSelect';
 import { t } from '@/core/i18n';
 
 // ── Segmented control ───────────────────────────────────────────────────────
@@ -10,8 +12,13 @@ import { t } from '@/core/i18n';
 export interface SegmentOption<T extends string> {
   value: T;
   label: string;
+  /** Shown instead of the label (which becomes the accessible name). */
+  icon?: IconName;
 }
 
+const SEG_INSET = 3;
+
+/** Text or icon segments; tap one, or press the selected one and slide. */
 export function SegmentedControl<T extends string>({
   options,
   value,
@@ -22,23 +29,32 @@ export function SegmentedControl<T extends string>({
   onChange: (value: T) => void;
 }) {
   const index = Math.max(0, options.findIndex((o) => o.value === value));
+  const select = (i: number): void => {
+    const o = options[i];
+    if (!o || o.value === value) return;
+    haptic('selection');
+    onChange(o.value);
+  };
+  const slide = useSlideSelect(options.length, index, select, SEG_INSET);
   return (
-    <div class="ui-seg" role="tablist" style={{ '--seg-count': options.length, '--seg-index': index }}>
-      <span class="ui-seg__thumb" aria-hidden="true" />
-      {options.map((o) => (
+    <div
+      class={cx('ui-seg', slide.pressed && 'is-pressed', slide.thumbX !== null && 'is-dragging')}
+      role="tablist"
+      style={{ '--seg-count': options.length, '--seg-index': index }}
+      {...slide.handlers}
+    >
+      <span class="ui-seg__thumb" aria-hidden="true" style={slide.thumbX === null ? undefined : { transform: `translateX(${slide.thumbX}px)` }} />
+      {options.map((o, i) => (
         <button
           key={o.value}
           type="button"
           role="tab"
           aria-selected={o.value === value}
-          class={cx('ui-seg__item', o.value === value && 'is-active')}
-          onClick={() => {
-            if (o.value === value) return;
-            haptic('selection');
-            onChange(o.value);
-          }}
+          {...(o.icon ? { 'aria-label': o.label, title: o.label } : {})}
+          class={cx('ui-seg__item', i === slide.shown && 'is-active', o.icon && 'ui-seg__item--icon')}
+          onClick={() => select(i)}
         >
-          {o.label}
+          {o.icon ? <Icon name={o.icon} size={22} /> : o.label}
         </button>
       ))}
     </div>

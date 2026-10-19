@@ -1,19 +1,31 @@
 import { signal } from '@preact/signals';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { formatDayMonth, today } from '@/core/date';
+import { formatDateLong, today } from '@/core/date';
 import { t } from '@/core/i18n';
 import type { QuickActionContext, RouteProps } from '@/core/registry';
-import { navigate } from '@/core/router';
+import { goBack, navigate } from '@/core/router';
 import { Button, Card, ChoiceChips, colorVar, confirm, DateField, EmptyState, Form, Icon, IconButton, List, ListRow, Page, Section, SheetActions, Switch, TextField, toast } from '@/ui';
 import { asIcon, fieldDisplay, FieldInput, openCollectionForm, Stars } from './components';
-import { allTags, parseTags, preview, searchNotes, sortNotes } from './logic';
-import { activeCollections, noteCollections, notes, notesByCollection, revisitNotes, type Note, type NoteCollection, type SortMode } from './model';
+import { allTags, isNoteEmpty, isSortableField, parseTags, preview, searchNotes, sortNotes } from './logic';
+import {
+  activeCollections,
+  archivedCollections,
+  noteCollections,
+  notes,
+  notesByCollection,
+  revisitNotes,
+  visibleNotes,
+  type FieldValue,
+  type Note,
+  type NoteCollection,
+  type SortMode,
+} from './model';
 
 function NoteRow({ note, collection, snippet }: { note: Note; collection?: NoteCollection | undefined; snippet?: string }) {
   const rating = collection?.fields.find((f) => f.type === 'rating');
   const ratingValue = rating ? note.values[rating.id] : undefined;
   const extras = (collection?.fields ?? []).map((f) => fieldDisplay(f, note.values[f.id])).filter(Boolean);
-  const meta = [collection && !snippet ? null : collection?.name, formatDayMonth(note.date), ...extras, ...note.tags.map((tg) => `#${tg}`)].filter(Boolean).join(' · ');
+  const meta = [collection && !snippet ? null : collection?.name, formatDateLong(note.date), ...extras, ...note.tags.map((tg) => `#${tg}`)].filter(Boolean).join(' · ');
   return (
     <button type="button" class="note-row" onClick={() => navigate(`notes/n/${note.id}`)}>
       <span class="note-row__head">
@@ -30,18 +42,41 @@ function NoteRow({ note, collection, snippet }: { note: Note; collection?: NoteC
   );
 }
 
+/** Notes created for the editor; only these vanish when left empty. */
+const freshNotes = new Set<string>();
+
 function createNote(collectionId: string): void {
   const n = notes.add({ collectionId, title: '', body: '', tags: [], date: today(), revisit: false, pinned: false, values: {} });
+  freshNotes.add(n.id);
   navigate(`notes/n/${n.id}`);
 }
 
+const REVISIT_PREVIEW = 5;
+
 const query = signal('');
+const revisitExpanded = signal(false);
+const archiveOpen = signal(false);
+
+function CollectionRow({ c }: { c: NoteCollection }) {
+  const count = notesByCollection.value.get(c.id)?.length ?? 0;
+  return (
+    <ListRow
+      icon={asIcon(c.icon)}
+      iconColor={colorVar(c.color)}
+      title={c.name}
+      subtitle={count ? t('notes.count', { count }) : t('notes.empty')}
+      chevron
+      onClick={() => navigate(`notes/c/${c.id}`)}
+    />
+  );
+}
 
 export function NotesHome() {
   const q = query.value.trim();
-  const hits = q ? searchNotes(notes.all.value, q) : [];
+  const hits = q ? searchNotes(visibleNotes.value, q) : [];
   const revisit = revisitNotes.value;
   const cols = activeCollections.value;
+  const archived = archivedCollections.value;
   return (
     <Page
       title={t('notes.title')}
@@ -64,9 +99,18 @@ export function NotesHome() {
       ) : (
         <>
           {revisit.length > 0 && (
-            <Section title={t('notes.revisit')}>
+            <Section
+              title={t('notes.revisit')}
+              action={
+                revisit.length > REVISIT_PREVIEW && (
+                  <Button size="sm" variant="ghost" onClick={() => (revisitExpanded.value = !revisitExpanded.value)}>
+                    {revisitExpanded.value ? t('notes.showLess') : t('notes.showAll', { count: revisit.length })}
+                  </Button>
+                )
+              }
+            >
               <div class="note-list">
-                {revisit.slice(0, 5).map((n) => (
+                {(revisitExpanded.value ? revisit : revisit.slice(0, REVISIT_PREVIEW)).map((n) => (
                   <NoteRow key={n.id} note={n} collection={noteCollections.get(n.collectionId)} snippet={preview(n.body, 80)} />
                 ))}
               </div>
@@ -82,47 +126,49 @@ export function NotesHome() {
               />
             ) : (
               <List>
-                {cols.map((c) => {
-                  const count = notesByCollection.value.get(c.id)?.length ?? 0;
-                  return (
-                    <ListRow
-                      key={c.id}
-                      icon={asIcon(c.icon)}
-                      iconColor={colorVar(c.color)}
-                      title={c.name}
-                      subtitle={count ? t('notes.count', { count }) : t('notes.empty')}
-                      chevron
-                      onClick={() => navigate(`notes/c/${c.id}`)}
-                    />
-                  );
-                })}
+                {cols.map((c) => (
+                  <CollectionRow key={c.id} c={c} />
+                ))}
               </List>
             )}
           </Section>
+          {archived.length > 0 && (
+            <Section>
+              <List>
+                <ListRow
+                  icon="package"
+                  title={t('common.archive')}
+                  value={archived.length}
+                  trailing={<Icon name={archiveOpen.value ? 'chevronDown' : 'chevronRight'} size={18} />}
+                  onClick={() => (archiveOpen.value = !archiveOpen.value)}
+                />
+                {archiveOpen.value && archived.map((c) => <CollectionRow key={c.id} c={c} />)}
+              </List>
+            </Section>
+          )}
         </>
       )}
     </Page>
   );
 }
 
-const tagFilter = signal<string | null>(null);
+/** Tag filter per collection; outlives the screen so it's still there on return. */
+const tagFilters = signal<Readonly<Record<string, string | null>>>({});
 
 export function CollectionScreen({ params }: RouteProps) {
   const c = noteCollections.byId(params.id);
-  useEffect(() => {
-    tagFilter.value = null;
-  }, [params.id]);
   if (!c) return <Page title={t('notes.collection')} back><EmptyState icon="notes" title={t('common.notFound')} /></Page>;
 
   const all = notesByCollection.value.get(c.id) ?? [];
   const tags = allTags(all);
-  const tag = tagFilter.value;
+  const saved = tagFilters.value[c.id] ?? null;
+  const tag = saved && tags.includes(saved) ? saved : null;
   const list = sortNotes(tag ? all.filter((n) => n.tags.includes(tag)) : all, c.sort, c.fields);
   const sortOptions: { value: SortMode; label: string }[] = [
     { value: 'updated', label: t('notes.sorts.updated') },
     { value: 'date', label: t('notes.sorts.date') },
     { value: 'title', label: t('notes.sorts.title') },
-    ...c.fields.filter((f) => f.type === 'rating' || f.type === 'number').map((f) => ({ value: `field:${f.id}` as SortMode, label: t('notes.sortBy', { name: f.name }) })),
+    ...c.fields.filter(isSortableField).map((f) => ({ value: `field:${f.id}` as SortMode, label: t('notes.sortBy', { name: f.name }) })),
   ];
 
   return (
@@ -138,7 +184,7 @@ export function CollectionScreen({ params }: RouteProps) {
     >
       <div class="tasks__filters">
         <ChoiceChips options={sortOptions} value={c.sort} onChange={(sort) => sort && noteCollections.update(c.id, { sort })} />
-        {tags.length > 0 && <ChoiceChips allowNone options={tags.map((tg) => ({ value: tg, label: `#${tg}` }))} value={tag} onChange={(v) => (tagFilter.value = v)} />}
+        {tags.length > 0 && <ChoiceChips allowNone options={tags.map((tg) => ({ value: tg, label: `#${tg}` }))} value={tag} onChange={(v) => (tagFilters.value = { ...tagFilters.value, [c.id]: v })} />}
       </div>
       {list.length === 0 ? (
         <EmptyState icon={asIcon(c.icon)} title={t('notes.emptyCollection')} action={<Button variant="primary" icon="plus" onClick={() => createNote(c.id)}>{t('notes.newNote')}</Button>} />
@@ -159,47 +205,89 @@ function AutoText({ value, onValue, placeholder }: { value: string; onValue: (v:
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Collapsing to "auto" shrinks the page for a moment and the browser clamps the scroll.
+    const scroller = el.closest<HTMLElement>('.ui-page__content, .ui-sheet__body');
+    const top = scroller?.scrollTop ?? 0;
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
+    if (scroller) scroller.scrollTop = top;
   }, [value]);
   return <textarea ref={ref} class="note-body" value={value} placeholder={placeholder} onInput={(e) => onValue(e.currentTarget.value)} />;
 }
-
-const isEmpty = (n: Pick<Note, 'title' | 'body' | 'values'>): boolean =>
-  !n.title.trim() && !n.body.trim() && Object.values(n.values).every((v) => v === null || v === '' || v === false);
 
 export function NoteEditor({ params }: RouteProps) {
   const note = notes.byId(params.id);
   const [draft, setDraft] = useState(note);
   const [tagsText, setTagsText] = useState(note?.tags.join(', ') ?? '');
+  // Created just to be edited here: dropped again if left empty.
+  const [isNew] = useState(() => (note ? freshNotes.delete(note.id) : false));
   const latest = useRef(draft);
   latest.current = draft;
+  const dirty = useRef(false);
+  /** Deleted with the trash button: never write it back. */
+  const deleted = useRef(false);
+  /** Removed as empty while the app was hidden: re-created if typing resumes. */
+  const autoRemoved = useRef(false);
 
-  // Autosave (debounced); an untouched empty note disappears when you leave.
+  const save = (): void => {
+    const d = latest.current;
+    if (!d || !dirty.current || deleted.current) return;
+    dirty.current = false;
+    const { id, createdAt: _c, updatedAt: _u, ...data } = d;
+    if (notes.get(id)) notes.update(id, data);
+    else if (autoRemoved.current) {
+      autoRemoved.current = false;
+      notes.add({ ...data, id });
+    }
+  };
+  /** On leaving (or the app going to the background, where iOS may kill it). */
+  const flush = (): void => {
+    const d = latest.current;
+    if (d && isNew && !deleted.current && isNoteEmpty(d)) {
+      dirty.current = false;
+      if (notes.get(d.id)) {
+        notes.remove(d.id);
+        autoRemoved.current = true;
+      }
+    } else save();
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+
+  // Autosave (debounced), only after an actual edit.
   useEffect(() => {
-    if (!draft) return;
-    const timer = setTimeout(() => {
-      const { id, createdAt: _c, updatedAt: _u, ...data } = draft;
-      notes.update(id, data);
-    }, 400);
+    if (!dirty.current) return;
+    const timer = setTimeout(save, 400);
     return () => clearTimeout(timer);
   }, [draft]);
-  useEffect(
-    () => () => {
-      const d = latest.current;
-      if (!d || !notes.get(d.id)) return;
-      if (isEmpty(d)) notes.remove(d.id);
-      else {
-        const { id, createdAt: _c, updatedAt: _u, ...data } = d;
-        notes.update(id, data);
-      }
-    },
-    [],
-  );
+  useEffect(() => {
+    const onHide = (): void => flushRef.current();
+    const onVisibility = (): void => {
+      if (document.visibilityState === 'hidden') onHide();
+    };
+    window.addEventListener('pagehide', onHide);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('pagehide', onHide);
+      document.removeEventListener('visibilitychange', onVisibility);
+      onHide();
+    };
+  }, []);
 
-  if (!note || !draft) return <Page title={t('notes.title')} back><EmptyState icon="notes" title={t('common.notFound')} /></Page>;
-  const c = noteCollections.get(note.collectionId);
-  const patch = (p: Partial<Note>): void => setDraft((cur) => (cur ? { ...cur, ...p } : cur));
+  // Render from the draft: the note itself may be gone for a moment (see `autoRemoved`).
+  if (!draft) return <Page title={t('notes.title')} back><EmptyState icon="notes" title={t('common.notFound')} /></Page>;
+  const c = noteCollections.get(draft.collectionId);
+  const edit = (fn: (cur: Note) => Note): void => {
+    dirty.current = true;
+    setDraft((cur) => {
+      if (!cur) return cur;
+      const next = fn(cur);
+      latest.current = next;
+      return next;
+    });
+  };
+  const patch = (p: Partial<Note>): void => edit((cur) => ({ ...cur, ...p }));
+  const setValue = (fieldId: string, v: FieldValue): void => edit((cur) => ({ ...cur, values: { ...cur.values, [fieldId]: v } }));
 
   return (
     <Page
@@ -211,8 +299,9 @@ export function NoteEditor({ params }: RouteProps) {
           label={t('common.delete')}
           onClick={async () => {
             if (await confirm({ title: t('notes.deleteNote'), confirmLabel: t('common.delete'), danger: true })) {
-              notes.remove(note.id);
-              history.back();
+              deleted.current = true;
+              notes.remove(draft.id);
+              goBack();
             }
           }}
         />
@@ -223,7 +312,7 @@ export function NoteEditor({ params }: RouteProps) {
         <Card>
           <Form>
             {c.fields.map((f) => (
-              <FieldInput key={f.id} field={f} value={draft.values[f.id] ?? null} onChange={(v) => patch({ values: { ...draft.values, [f.id]: v } })} />
+              <FieldInput key={f.id} field={f} value={draft.values[f.id] ?? null} onChange={(v) => setValue(f.id, v)} />
             ))}
           </Form>
         </Card>
@@ -247,11 +336,13 @@ const lastCollection = signal<string | null>(null);
 
 export function QuickNote({ close }: QuickActionContext) {
   const cols = activeCollections.value;
-  const [collectionId, setCollectionId] = useState<string | null>(lastCollection.value ?? cols[0]?.id ?? null);
+  // The remembered collection may have been archived or deleted since.
+  const [picked, setCollectionId] = useState<string | null>(() => (cols.some((c) => c.id === lastCollection.value) ? lastCollection.value : (cols[0]?.id ?? null)));
+  const collectionId = picked && cols.some((c) => c.id === picked) ? picked : null;
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   if (cols.length === 0) {
-    return <EmptyState icon="notes" title={t('notes.noCollections')} action={<Button variant="primary" onClick={() => { close(); navigate('notes'); }}>{t('notes.newCollection')}</Button>} />;
+    return <EmptyState icon="notes" title={t('notes.noCollections')} action={<Button variant="primary" onClick={() => { close(); navigate('notes'); openCollectionForm(null); }}>{t('notes.newCollection')}</Button>} />;
   }
   return (
     <Form>
