@@ -5,6 +5,7 @@ import { registry } from '@/core/registry';
 import { currentTab, direction, matchRoute, navigate, path } from '@/core/router';
 import { openQuickMenu, QuickMenu } from '@/features/quick/QuickMenu';
 import { FxLayer } from '@/ui/FxLayer';
+import { ScreenStack } from './ScreenStack';
 import { cx, Icon, OverlayHost } from '@/ui';
 import { t } from '@/core/i18n';
 
@@ -65,11 +66,7 @@ export function App() {
   return (
     <div class="app">
       <main class="app__stage">
-        {Screen && match && (
-          <div key={current} class={cx('app__screen', `nav-${direction.value}`)}>
-            <Screen params={match.params} />
-          </div>
-        )}
+        {Screen && match && <ScreenStack current={current} Screen={Screen} params={match.params} dir={direction.value} />}
       </main>
       <UpdateBanner />
       <button type="button" class="ui-fab" aria-label={t('app.quickActions')} onClick={openQuickMenu}>

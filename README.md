@@ -1,4 +1,4 @@
-# Органайзер
+# Totum
 
 Личное PWA-приложение (iPhone, экран «Домой»). Спецификация и архитектура — [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 

@@ -5,7 +5,7 @@ import { db, type StoredBackup } from './idb';
 import { migrate, SCHEMA_VERSION } from './migrations';
 import { registeredCollections, replaceAll, snapshotAll, type DataSnapshot } from './store';
 
-const APP_ID = 'organizer';
+const APP_ID = 'totum';
 const AUTO_BACKUPS_KEPT = 5;
 
 const EnvelopeSchema = v.object({

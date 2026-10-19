@@ -5,7 +5,7 @@ declare const __PRECACHE__: string[];
 declare const __VERSION__: string;
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
-const CACHE = `organizer-${__VERSION__}`;
+const CACHE = `totum-${__VERSION__}`;
 const INDEX_URL = new URL('./index.html', sw.registration.scope).href;
 
 sw.addEventListener('install', (event) => {
@@ -19,7 +19,7 @@ sw.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
       const keys = await caches.keys();
-      await Promise.all(keys.filter((k) => k.startsWith('organizer-') && k !== CACHE).map((k) => caches.delete(k)));
+      await Promise.all(keys.filter((k) => k.startsWith('totum-') && k !== CACHE).map((k) => caches.delete(k)));
       await sw.clients.claim();
     })(),
   );

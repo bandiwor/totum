@@ -25,7 +25,7 @@ interface OrganizerDB extends DBSchema {
 let dbPromise: Promise<IDBPDatabase<OrganizerDB>> | null = null;
 
 export function db(): Promise<IDBPDatabase<OrganizerDB>> {
-  dbPromise ??= openDB<OrganizerDB>('organizer', 1, {
+  dbPromise ??= openDB<OrganizerDB>('totum', 1, {
     upgrade(database) {
       const records = database.createObjectStore('records', { keyPath: ['c', 'id'] });
       records.createIndex('byCollection', 'c');

@@ -1,6 +1,7 @@
 import { appVersion, applyUpdate, checkForUpdate, checkingUpdate, storagePersisted, updateReady } from '@/core/pwa';
 import { settings, type ThemePref } from '@/core/settings';
-import { Badge, Button, List, ListRow, openSheet, Page, Section, SegmentedControl, Switch, toast } from '@/ui';
+import { Badge, Button, Card, List, ListRow, openSheet, Page, Section, SegmentedControl, Switch, toast } from '@/ui';
+import { AccentPicker } from './AccentPicker';
 import { BackupsSheet, ExportSheet, ImportSheet } from './DataSheets';
 import { t } from '@/core/i18n';
 
@@ -29,6 +30,10 @@ export function SettingsScreen() {
 
       <Section title={t('settings.appearance')}>
         <SegmentedControl options={THEMES.map((value) => ({ value, label: t(`settings.themes.${value}`) }))} value={s.theme} onChange={(theme) => settings.set({ theme })} />
+        <Card>
+          <p class="accent-picker__title">{t('settings.accent')}</p>
+          <AccentPicker />
+        </Card>
         <List>
           <ListRow icon="zap" title={t('settings.haptics')} trailing={<Switch label={t('settings.haptics')} checked={s.haptics} onChange={(haptics) => settings.set({ haptics })} />} />
           <ListRow icon="sparkles" title={t('settings.effects')} subtitle={t('settings.effectsSub')} trailing={<Switch label={t('settings.effects')} checked={s.effects} onChange={(effects) => settings.set({ effects })} />} />

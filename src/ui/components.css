@@ -314,7 +314,7 @@
 .ui-check.is-checked {
   background: var(--check-color);
   border-color: var(--check-color);
-  color: var(--accent-contrast);
+  color: var(--on-category);
   /* Reward hook: replaced by real effects later (see core/fx.ts). */
   animation: ui-pop var(--dur-base) var(--ease-out);
 }
@@ -396,6 +396,7 @@
   min-width: 0;
 }
 .ui-stepper__value input {
+  font-family: var(--font-rounded);
   max-width: 100%;
   min-width: 0;
   border: 0;
@@ -449,6 +450,7 @@
   color: var(--text-2);
 }
 .ui-stat__value {
+  font-family: var(--font-rounded);
   font-size: var(--fs-xl);
   font-weight: 700;
 }
@@ -495,6 +497,7 @@
   width: var(--space-2);
 }
 .ui-header__title {
+  font-family: var(--font-display);
   flex: 1;
   font-size: var(--fs-lg);
   font-weight: 600;
@@ -510,6 +513,7 @@
   justify-content: flex-end;
 }
 .ui-header__large {
+  font-family: var(--font-display);
   font-size: var(--fs-3xl);
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -560,7 +564,7 @@
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   padding-bottom: var(--safe-bottom);
   transform: translateY(100%);
-  transition: transform var(--dur-slow) var(--ease-out);
+  transition: transform 420ms var(--ease-enter);
   box-shadow: var(--shadow-float);
 }
 .ui-overlay--fullscreen .ui-sheet {
@@ -571,7 +575,7 @@
 }
 .ui-overlay.is-exit .ui-sheet {
   transform: translateY(100%);
-  transition-duration: var(--dur-base);
+  transition: transform 240ms var(--ease-exit);
 }
 .ui-sheet__grabber {
   display: grid;
@@ -593,6 +597,7 @@
   touch-action: none;
 }
 .ui-sheet__head h2 {
+  font-family: var(--font-display);
   font-size: var(--fs-xl);
   font-weight: 700;
 }
@@ -626,9 +631,9 @@
   border-radius: var(--radius-xl);
   background: var(--surface);
   box-shadow: var(--shadow-float);
-  transform: scale(0.92);
+  transform: scale(0.94);
   opacity: 0;
-  transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base);
+  transition: transform var(--dur-slow) var(--ease-enter), opacity var(--dur-base) var(--ease-enter);
 }
 .ui-overlay.is-open .ui-dialog {
   transform: scale(1);
@@ -704,18 +709,7 @@
   from { transform: translateY(-16px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
-@keyframes ui-page-push {
-  from { transform: translateX(30%); opacity: 0; }
-  to { transform: none; opacity: 1; }
-}
-@keyframes ui-page-pop {
-  from { transform: translateX(-20%); opacity: 0; }
-  to { transform: none; opacity: 1; }
-}
-@keyframes ui-page-fade {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
+
 
 /* Switch fallback for browsers without the native `switch` control (non-Safari). */
 @supports not selector(::thumb) {
@@ -860,10 +854,12 @@
   font-weight: 600;
 }
 .ui-strip__num {
+  font-family: var(--font-rounded);
   font-size: var(--fs-lg);
   font-weight: 700;
 }
 .ui-strip__day.is-today .ui-strip__num {
+  font-family: var(--font-rounded);
   color: var(--accent);
 }
 .ui-strip__day.is-selected {
@@ -988,4 +984,29 @@
 .ui-strip + .ui-section,
 .ui-card + .ui-section {
   margin-top: var(--space-4);
+}
+
+/* ── Reward effects (spawned by FxLayer) ── */
+.fx-dot,
+.fx-ring,
+.fx-confetti {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.fx-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.fx-ring {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+.fx-confetti {
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
 }

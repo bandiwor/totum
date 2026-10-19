@@ -13,8 +13,8 @@ const targets = [
   { file: 'icon-192.png', size: 192, pad: 0, bg: 'transparent' },
   { file: 'icon-512.png', size: 512, pad: 0, bg: 'transparent' },
   // Maskable/Apple: full-bleed background, glyph inside the safe zone.
-  { file: 'icon-maskable-512.png', size: 512, pad: 0.1, bg: '#0c0d10' },
-  { file: 'apple-touch-icon.png', size: 180, pad: 0, bg: '#0c0d10' },
+  { file: 'icon-maskable-512.png', size: 512, pad: 0.1, bg: '#000000' },
+  { file: 'apple-touch-icon.png', size: 180, pad: 0, bg: '#000000' },
 ];
 
 for (const t of targets) {
