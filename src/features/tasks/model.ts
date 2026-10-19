@@ -18,7 +18,7 @@ export interface Task extends Entity {
 }
 
 export const tasks = defineCollection<Task>('tasks', {
-  label: 'Задачи',
+  label: 'collections.tasks',
   schema: v.object({
     ...entityFields,
     title: v.string(),

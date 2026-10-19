@@ -22,10 +22,11 @@ import {
   TextField,
   type ColorKey,
 } from '@/ui';
-import { exerciseSeries, progressStatus, STATUS_LABELS, trend, type ProgressStatus } from './analytics';
+import { exerciseSeries, progressStatus, statusLabel, trend, type ProgressStatus } from './analytics';
 import { openExerciseForm } from './ExerciseForm';
-import { categories, exercises, formatKg, formatSet, MEASURE_LABELS, sessions, sortedCategories, type ExerciseCategory } from './model';
-import { inPeriod, period, PERIODS } from './period';
+import { categories, exercises, formatKg, formatSet, measureLabel, sessions, sortedCategories, type ExerciseCategory } from './model';
+import { inPeriod, period, periodOptions } from './period';
+import { t } from '@/core/i18n';
 
 export const STATUS_TONE: Record<ProgressStatus, 'positive' | 'neutral' | 'warning'> = {
   growth: 'positive',
@@ -35,12 +36,12 @@ export const STATUS_TONE: Record<ProgressStatus, 'positive' | 'neutral' | 'warni
 };
 
 export function formatPct(p: number): string {
-  return `${p > 0 ? '+' : ''}${p.toFixed(1)}%/нед`;
+  return t('training.pctWeek', { pct: `${p > 0 ? '+' : ''}${p.toFixed(1)}` });
 }
 
 /** "+2.7%" — for stat tiles, with "в нед" as the unit. */
 export function formatPctShort(p: number): string {
-  return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`;
+  return t('training.pct', { pct: `${p > 0 ? '+' : ''}${p.toFixed(1)}` });
 }
 
 function CategoryForm({ category, close }: { category: ExerciseCategory | null; close: () => void }) {
@@ -49,7 +50,7 @@ function CategoryForm({ category, close }: { category: ExerciseCategory | null; 
   const used = category ? exercises.all.value.some((e) => e.categoryId === category.id) : false;
   return (
     <Form>
-      <TextField label="Название" value={name} onValue={setName} autoFocus={!category} />
+      <TextField label={t('common.name')} value={name} onValue={setName} autoFocus={!category} />
       <ColorPicker value={color} onChange={(c: ColorKey) => setColor(c)} />
       <SheetActions>
         <Button
@@ -63,11 +64,11 @@ function CategoryForm({ category, close }: { category: ExerciseCategory | null; 
             close();
           }}
         >
-          Сохранить
+          {t('common.save')}
         </Button>
         {category && !used && (
           <Button variant="danger" block icon="trash" onClick={() => { categories.remove(category.id); close(); }}>
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -77,7 +78,7 @@ function CategoryForm({ category, close }: { category: ExerciseCategory | null; 
 
 function openCategories(): void {
   const edit = (c: ExerciseCategory | null): void =>
-    void openSheet((close) => <CategoryForm category={c} close={close} />, { title: c ? c.name : 'Новая категория' });
+    void openSheet((close) => <CategoryForm category={c} close={close} />, { title: c ? c.name : t('training.newCategory') });
   void openSheet(
     () => (
       <>
@@ -88,12 +89,12 @@ function openCategories(): void {
         </List>
         <SheetActions>
           <Button block icon="plus" onClick={() => edit(null)}>
-            Новая категория
+            {t('training.newCategory')}
           </Button>
         </SheetActions>
       </>
     ),
-    { title: 'Категории' },
+    { title: t('training.categories') },
   );
 }
 
@@ -101,22 +102,22 @@ export function ExercisesScreen() {
   const all = [...exercises.all.value].sort((a, b) => Number(a.archived) - Number(b.archived) || a.name.localeCompare(b.name, 'ru'));
   const groups = [
     ...sortedCategories.value.map((c) => ({ key: c.id, title: c.name, items: all.filter((e) => e.categoryId === c.id) })),
-    { key: 'none', title: 'Без категории', items: all.filter((e) => !e.categoryId || !categories.get(e.categoryId)) },
+    { key: 'none', title: t('training.noCategory'), items: all.filter((e) => !e.categoryId || !categories.get(e.categoryId)) },
   ].filter((g) => g.items.length > 0);
 
   return (
     <Page
-      title="Упражнения"
+      title={t('training.exercises')}
       back
       actions={
         <>
-          <Button size="sm" variant="ghost" onClick={openCategories}>Категории</Button>
+          <Button size="sm" variant="ghost" onClick={openCategories}>{t('training.categories')}</Button>
           <Button size="sm" variant="ghost" icon="plus" onClick={() => openExerciseForm(null)} />
         </>
       }
     >
       {groups.length === 0 ? (
-        <EmptyState icon="dumbbell" title="Упражнений нет" action={<Button variant="primary" icon="plus" onClick={() => openExerciseForm(null)}>Добавить</Button>} />
+        <EmptyState icon="dumbbell" title={t('training.noExercises')} action={<Button variant="primary" icon="plus" onClick={() => openExerciseForm(null)}>{t('common.add')}</Button>} />
       ) : (
         groups.map((g) => (
           <Section key={g.key} title={g.title}>
@@ -124,8 +125,8 @@ export function ExercisesScreen() {
               {g.items.map((e) => (
                 <ListRow
                   key={e.id}
-                  title={e.archived ? `${e.name} (архив)` : e.name}
-                  subtitle={MEASURE_LABELS[e.measure]}
+                  title={e.archived ? t('common.archivedSuffix', { name: e.name }) : e.name}
+                  subtitle={measureLabel(e.measure)}
                   chevron
                   onClick={() => navigate(`health/exercise/${e.id}`)}
                 />
@@ -140,14 +141,14 @@ export function ExercisesScreen() {
 
 export function ExerciseScreen({ params }: RouteProps) {
   const exercise = exercises.byId(params.id);
-  if (!exercise) return <Page title="Упражнение" back><EmptyState icon="dumbbell" title="Не найдено" /></Page>;
+  if (!exercise) return <Page title={t('training.exercise')} back><EmptyState icon="dumbbell" title={t('common.notFound')} /></Page>;
   const all = exerciseSeries(exercise, sessions.all.value);
   const series = exerciseSeries(exercise, inPeriod(sessions.all.value, period.value));
-  const t = trend(series);
+  const tr = trend(series);
   const status = progressStatus(all, trend(all));
   const best = all.length ? Math.max(...all.map((p) => p.value)) : 0;
   const isWeight = exercise.measure === 'weight';
-  const unit = isWeight ? 'кг' : exercise.measure === 'time' ? 'с' : 'повт';
+  const unit = isWeight ? t('units.kg') : exercise.measure === 'time' ? t('units.sec') : t('units.reps');
   const fmt = (v: number): string => (isWeight ? formatKg(Math.round(v * 2) / 2) : v.toFixed(0));
   const category = exercise.categoryId ? categories.get(exercise.categoryId) : undefined;
 
@@ -155,33 +156,33 @@ export function ExerciseScreen({ params }: RouteProps) {
     <Page title={exercise.name} back actions={<Button size="sm" variant="ghost" icon="pencil" onClick={() => openExerciseForm(exercise)} />}>
       <div class="ex-meta">
         {category && <Badge>{category.name}</Badge>}
-        <Badge tone={STATUS_TONE[status]}>{STATUS_LABELS[status]}</Badge>
+        <Badge tone={STATUS_TONE[status]}>{statusLabel(status)}</Badge>
       </div>
-      <SegmentedControl options={PERIODS} value={period.value} onChange={(p) => (period.value = p)} />
+      <SegmentedControl options={periodOptions()} value={period.value} onChange={(p) => (period.value = p)} />
       <Section>
         <div class="stat-grid">
           <Card>
-            <Stat label={isWeight ? 'Рекорд e1RM' : 'Рекорд'} value={fmt(best)} unit={unit} />
+            <Stat label={isWeight ? t('training.recordE1rm') : t('training.record')} value={fmt(best)} unit={unit} />
           </Card>
           <Card>
             <Stat
-              label="Тренд"
-              value={t ? formatPctShort(t.weeklyPct) : '—'}
-              {...(t ? { unit: 'в нед' } : {})}
-              {...(t ? { delta: { text: `${t.n} трен.`, direction: t.weeklyPct > 0.1 ? 'up' : t.weeklyPct < -0.1 ? 'down' : 'flat' } } : {})}
+              label={t('training.trend')}
+              value={tr ? formatPctShort(tr.weeklyPct) : '—'}
+              {...(tr ? { unit: t('training.perWeek') } : {})}
+              {...(tr ? { delta: { text: t('training.sessionsN', { n: tr.n }), direction: tr.weeklyPct > 0.1 ? 'up' : tr.weeklyPct < -0.1 ? 'down' : 'flat' } } : {})}
             />
           </Card>
         </div>
       </Section>
-      <Section title={isWeight ? 'Расчётный максимум (e1RM)' : 'Лучший подход'}>
+      <Section title={isWeight ? t('training.e1rmTitle') : t('training.bestSet')}>
         <Card>
-          <LineChart points={series} trendAt={t?.at} format={fmt} />
+          <LineChart points={series} trendAt={tr?.at} format={fmt} />
         </Card>
-        {isWeight && <p class="settings__note">e1RM — вес на 1 повтор по формуле Эпли с поправкой на RPE. Пунктир — тренд.</p>}
+        {isWeight && <p class="settings__note">{t('training.e1rmHint')}</p>}
       </Section>
-      <Section title="История">
+      <Section title={t('training.history')}>
         {all.length === 0 ? (
-          <p class="widget-empty">Ещё не выполнялось.</p>
+          <p class="widget-empty">{t('training.neverDone')}</p>
         ) : (
           <List>
             {[...all].reverse().slice(0, 15).map((p) => (
@@ -201,7 +202,7 @@ export function ExerciseScreen({ params }: RouteProps) {
         )}
       </Section>
       {exercise.note && (
-        <Section title="Заметка">
+        <Section title={t('common.note')}>
           <Card>
             <p data-selectable>{exercise.note}</p>
           </Card>

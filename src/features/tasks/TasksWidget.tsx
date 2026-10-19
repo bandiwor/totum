@@ -3,6 +3,7 @@ import { Button, List, Section } from '@/ui';
 import { overdueTasks, tasksOn } from './model';
 import { openTaskForm } from './TaskForm';
 import { TaskRow } from './TaskRow';
+import { t } from '@/core/i18n';
 
 export function TasksWidget({ date }: { date: ISODate }) {
   const overdue = date === today() ? overdueTasks(date) : [];
@@ -10,8 +11,8 @@ export function TasksWidget({ date }: { date: ISODate }) {
   const done = list.filter((t) => t.done).length;
   return (
     <Section
-      title={list.length ? `Задачи · ${done}/${list.length}` : 'Задачи'}
-      action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openTaskForm({ preset: { date } })}>Задача</Button>}
+      title={list.length ? t('tasks.widgetTitle', { done, total: list.length }) : t('tasks.tasks')}
+      action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openTaskForm({ preset: { date } })}>{t('tasks.task')}</Button>}
     >
       {overdue.length > 0 && (
         <List>
@@ -27,7 +28,7 @@ export function TasksWidget({ date }: { date: ISODate }) {
           ))}
         </List>
       ) : (
-        overdue.length === 0 && <p class="widget-empty">На этот день задач нет.</p>
+        overdue.length === 0 && <p class="widget-empty">{t('tasks.noneForDay')}</p>
       )}
     </Section>
   );

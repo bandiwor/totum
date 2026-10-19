@@ -9,24 +9,25 @@ import { PlacePicker } from '@/features/places/PlacePicker';
 import { Badge, Button, ChoiceChips, colorVar, CycleEditor, EmptyState, Field, Form, List, ListRow, openSheet, Page, Section, SheetActions, TimeRange } from '@/ui';
 import { startSession } from './actions';
 import { formatTarget, exercises, plannedWorkouts, cancelledWorkouts, program, sessionForSlot, templates, workoutOverrides, type SlotData, type TemplateSlot } from './model';
+import { t } from '@/core/i18n';
 
-function SlotForm({ initial, onSave, onDelete, saveLabel = 'Сохранить', close }: { initial: SlotData; onSave: (d: SlotData) => void; onDelete?: () => void; saveLabel?: string; close: () => void }) {
+function SlotForm({ initial, onSave, onDelete, saveLabel = t('common.save'), close }: { initial: SlotData; onSave: (d: SlotData) => void; onDelete?: () => void; saveLabel?: string; close: () => void }) {
   const [d, setD] = useState(initial);
   const list = templates.all.value;
   if (list.length === 0) {
     return (
       <EmptyState
         icon="dumbbell"
-        title="Сначала создай тренировку"
-        action={<Button variant="primary" onClick={() => { close(); navigate('health/templates'); }}>К тренировкам</Button>}
+        title={t('training.createWorkoutFirst')}
+        action={<Button variant="primary" onClick={() => { close(); navigate('health/templates'); }}>{t('training.toWorkouts')}</Button>}
       />
     );
   }
   return (
     <Form>
-      <Field label="Тренировка">
+      <Field label={t('training.workout')}>
         <ChoiceChips
-          options={list.map((t) => ({ value: t.id, label: t.name, color: colorVar(t.color) }))}
+          options={list.map((tpl) => ({ value: tpl.id, label: tpl.name, color: colorVar(tpl.color) }))}
           value={d.templateId}
           onChange={(templateId) => {
             if (!templateId) return;
@@ -36,8 +37,8 @@ function SlotForm({ initial, onSave, onDelete, saveLabel = 'Сохранить',
         />
       </Field>
       <TimeRange start={d.start} end={d.end} onChange={(start, end) => setD({ ...d, start, end })} />
-      <Field label="Где" hint="Для расчёта дороги">
-        <PlacePicker value={d.placeId} onChange={(placeId) => setD({ ...d, placeId })} noneLabel="Дома / без дороги" />
+      <Field label={t('common.where')} hint={t('training.travelHint')}>
+        <PlacePicker value={d.placeId} onChange={(placeId) => setD({ ...d, placeId })} noneLabel={t('training.atHomeNoTravel')} />
       </Field>
       <SheetActions>
         <Button
@@ -56,7 +57,7 @@ function SlotForm({ initial, onSave, onDelete, saveLabel = 'Сохранить',
         </Button>
         {onDelete && (
           <Button variant="danger" block icon="trash" onClick={() => { onDelete(); close(); }}>
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -65,9 +66,9 @@ function SlotForm({ initial, onSave, onDelete, saveLabel = 'Сохранить',
 }
 
 function defaultSlot(): SlotData {
-  const t = templates.all.value[0];
+  const tpl = templates.all.value[0];
   const last = program.value.value.cycle?.days.flat().at(-1);
-  return { templateId: t?.id ?? '', start: 18 * 60, end: 18 * 60 + (t?.duration ?? 75), placeId: last?.placeId ?? null };
+  return { templateId: tpl?.id ?? '', start: 18 * 60, end: 18 * 60 + (tpl?.duration ?? 75), placeId: last?.placeId ?? null };
 }
 
 export function ProgramScreen() {
@@ -77,13 +78,13 @@ export function ProgramScreen() {
     haptic('success');
   };
   return (
-    <Page title="Программа" back>
+    <Page title={t('training.program')} back>
       {!cycle ? (
         <EmptyState
           icon="calendar"
-          title="Программы нет"
-          text="Программа ставит тренировки по дням недели или циклом на любое число дней (например, 3 дня через 1)."
-          action={<Button variant="primary" icon="plus" onClick={create}>Создать</Button>}
+          title={t('training.noProgram')}
+          text={t('training.noProgramText')}
+          action={<Button variant="primary" icon="plus" onClick={create}>{t('training.create')}</Button>}
         />
       ) : (
         <>
@@ -93,15 +94,15 @@ export function ProgramScreen() {
             makeDay={() => []}
             summary={(day) =>
               day.length
-                ? [...day].sort((a, b) => a.start - b.start).map((s) => `${templates.get(s.templateId)?.name ?? '?'} ${formatTime(s.start)}`).join(', ')
-                : 'Отдых'
+                ? [...day].sort((a, b) => a.start - b.start).map((s) => t('training.slotSummary', { name: templates.get(s.templateId)?.name ?? '?', time: formatTime(s.start) })).join(', ')
+                : t('training.rest')
             }
             onOpenDay={(i) => navigate(`health/program/day/${i}`)}
-            title="Дни программы"
+            title={t('training.programDays')}
           />
           <Section>
             <Button block variant="ghost" onClick={() => navigate('health/templates')}>
-              Тренировки и упражнения в них
+              {t('training.templatesLink')}
             </Button>
           </Section>
         </>
@@ -114,7 +115,7 @@ export function ProgramDayScreen({ params }: RouteProps) {
   const cycle = program.value.value.cycle;
   const index = Number(params.index);
   const day = cycle?.days[index];
-  if (!cycle || !day) return <Page title="День" back><EmptyState icon="calendar" title="Не найдено" /></Page>;
+  if (!cycle || !day) return <Page title={t('schedule.day')} back><EmptyState icon="calendar" title={t('common.notFound')} /></Page>;
 
   const setDay = (next: TemplateSlot[]): void => program.set({ cycle: { ...cycle, days: cycle.days.map((d, i) => (i === index ? next : d)) } });
   const open = (slot: TemplateSlot | null): void =>
@@ -127,24 +128,24 @@ export function ProgramDayScreen({ params }: RouteProps) {
           close={close}
         />
       ),
-      { title: slot ? 'Тренировка' : 'Добавить тренировку' },
+      { title: slot ? t('training.workout') : t('training.addWorkout') },
     );
 
   return (
-    <Page title={cycleDayLabel(cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => open(null)}>Добавить</Button>}>
+    <Page title={cycleDayLabel(cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => open(null)}>{t('common.add')}</Button>}>
       {day.length === 0 ? (
-        <EmptyState icon="sparkles" title="День отдыха" action={<Button variant="primary" icon="plus" onClick={() => open(null)}>Добавить тренировку</Button>} />
+        <EmptyState icon="sparkles" title={t('training.restDay')} action={<Button variant="primary" icon="plus" onClick={() => open(null)}>{t('training.addWorkout')}</Button>} />
       ) : (
         <Section>
           <List>
             {[...day].sort((a, b) => a.start - b.start).map((s) => {
-              const t = templates.get(s.templateId);
+              const tpl = templates.get(s.templateId);
               return (
                 <ListRow
                   key={s.id}
-                  leading={<span class="color-dot" style={{ background: colorVar(t?.color ?? 'c8') }} />}
-                  title={t?.name ?? 'Удалена'}
-                  value={`${formatTime(s.start)}–${formatTime(s.end)}`}
+                  leading={<span class="color-dot" style={{ background: colorVar(tpl?.color ?? 'c8') }} />}
+                  title={tpl?.name ?? t('training.deleted')}
+                  value={t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })}
                   onClick={() => open(s)}
                 />
               );
@@ -175,10 +176,10 @@ function SlotDetails({ date, slotKey, close }: { date: ISODate; slotKey: string;
   return (
     <>
       <p class="sheet-note">
-        {formatRelativeDay(date)} · {formatTime(w.data.start)}–{formatTime(w.data.end)}{' '}
-        {cancelled && <Badge tone="danger">Отменена</Badge>}
-        {w.modified && <Badge tone="warning">Изменена</Badge>}
-        {w.origin === 'added' && <Badge tone="accent">Разовая</Badge>}
+        {t('schedule.dayHeader', { day: formatRelativeDay(date), from: formatTime(w.data.start), to: formatTime(w.data.end) })}{' '}
+        {cancelled && <Badge tone="danger">{t('schedule.cancelled')}</Badge>}
+        {w.modified && <Badge tone="warning">{t('schedule.modified')}</Badge>}
+        {w.origin === 'added' && <Badge tone="accent">{t('schedule.oneOff')}</Badge>}
       </p>
       {w.template && w.template.exercises.length > 0 && (
         <List>
@@ -192,16 +193,16 @@ function SlotDetails({ date, slotKey, close }: { date: ISODate; slotKey: string;
         {!cancelled &&
           (session ? (
             <Button variant="primary" size="lg" block icon="dumbbell" onClick={() => { close(); navigate(`health/session/${session.id}`); }}>
-              {session.finished ? 'Открыть запись' : 'Продолжить'}
+              {session.finished ? t('training.openRecord') : t('training.continue')}
             </Button>
           ) : (
             <Button variant="primary" size="lg" block icon="dumbbell" onClick={begin}>
-              Начать тренировку
+              {t('training.startWorkout')}
             </Button>
           ))}
         {(cancelled || w.modified) && (
           <Button block icon="history" onClick={() => { workoutOverrides.reset(date, slotKey); haptic('success'); }}>
-            Вернуть как в программе
+            {t('training.restoreProgram')}
           </Button>
         )}
         {!cancelled && (
@@ -210,12 +211,12 @@ function SlotDetails({ date, slotKey, close }: { date: ISODate; slotKey: string;
             icon="pencil"
             onClick={() =>
               openSheet(
-                (c) => <SlotForm initial={w.data} saveLabel="Сохранить на этот день" onSave={(data) => workoutOverrides.modify(date, slotKey, data)} close={c} />,
-                { title: 'Только этот день' },
+                (c) => <SlotForm initial={w.data} saveLabel={t('schedule.saveForDay')} onSave={(data) => workoutOverrides.modify(date, slotKey, data)} close={c} />,
+                { title: t('schedule.onlyThisDay') },
               )
             }
           >
-            Изменить только этот день
+            {t('schedule.editThisDay')}
           </Button>
         )}
         {!cancelled && !session && (
@@ -229,12 +230,12 @@ function SlotDetails({ date, slotKey, close }: { date: ISODate; slotKey: string;
               if (w.origin === 'added') close();
             }}
           >
-            {w.origin === 'added' ? 'Удалить разовую' : 'Пропустить'}
+            {w.origin === 'added' ? t('training.deleteOneOff') : t('training.skip')}
           </Button>
         )}
         {cycle && w.origin === 'template' && (
           <Button block variant="ghost" onClick={() => { close(); navigate(`health/program/day/${cycleDayIndex(cycle, date)}`); }}>
-            Изменить в программе
+            {t('training.editInProgram')}
           </Button>
         )}
       </SheetActions>
@@ -248,12 +249,12 @@ export function openWorkoutSlot(date: ISODate, id: string): void {
     return;
   }
   const w = plannedWorkouts(date).find((p) => p.key === id) ?? cancelledWorkouts(date).find((p) => p.key === id);
-  void openSheet((close) => <SlotDetails date={date} slotKey={id} close={close} />, { title: w?.template?.name ?? 'Тренировка' });
+  void openSheet((close) => <SlotDetails date={date} slotKey={id} close={close} />, { title: w?.template?.name ?? t('training.workout') });
 }
 
 export function openAddWorkout(date: ISODate): void {
   void openSheet(
-    (close) => <SlotForm initial={defaultSlot()} saveLabel="Добавить на этот день" onSave={(data) => workoutOverrides.add(date, data)} close={close} />,
-    { title: 'Разовая тренировка' },
+    (close) => <SlotForm initial={defaultSlot()} saveLabel={t('schedule.addForDay')} onSave={(data) => workoutOverrides.add(date, data)} close={close} />,
+    { title: t('training.oneOffWorkout') },
   );
 }

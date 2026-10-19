@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { newId } from '../id';
+import { t } from '../i18n';
 import { db, type StoredBackup } from './idb';
 import { migrate, SCHEMA_VERSION } from './migrations';
 import { registeredCollections, replaceAll, snapshotAll, type DataSnapshot } from './store';
@@ -43,10 +44,10 @@ export function parseBackup(text: string): ImportPreview {
   try {
     raw = JSON.parse(text.trim());
   } catch {
-    throw new Error('Это не JSON. Скопируй экспорт целиком, от { до }.');
+    throw new Error(t('backup.notJson'));
   }
   const env = v.safeParse(EnvelopeSchema, raw);
-  if (!env.success) throw new Error('Формат не похож на экспорт этого приложения.');
+  if (!env.success) throw new Error(t('backup.wrongFormat'));
 
   const data = migrate({ collections: env.output.collections, docs: env.output.docs }, env.output.schemaVersion);
   const warnings: string[] = [];
@@ -60,17 +61,20 @@ export function parseBackup(text: string): ImportPreview {
       const r = v.safeParse(schema, item);
       if (!r.success) {
         const issue = r.issues[0];
-        throw new Error(`«${def?.label ?? name}», запись ${i + 1}: ${issue?.message ?? 'неверные данные'}`);
+        throw new Error(t('backup.badRecord', { section: def ? t(def.label) : name, n: i + 1, message: issue?.message ?? t('backup.badData') }));
       }
       const id = (item as { id: string }).id;
-      if (ids.has(id)) throw new Error(`«${def?.label ?? name}»: повторяется id ${id}`);
+      if (ids.has(id)) throw new Error(t('backup.duplicateId', { section: def ? t(def.label) : name, id }));
       ids.add(id);
     });
-    if (!def) warnings.push(`Раздел «${name}» неизвестен этой версии — он сохранится, но не будет отображаться.`);
+    if (!def) warnings.push(t('backup.unknownSection', { name }));
   }
 
   const counts = Object.entries(data.collections)
-    .map(([name, items]) => ({ name, label: known.get(name)?.label ?? name, count: items.length }))
+    .map(([name, items]) => {
+      const def = known.get(name);
+      return { name, label: def ? t(def.label) : name, count: items.length };
+    })
     .filter((c) => c.count > 0)
     .sort((a, b) => b.count - a.count);
 
@@ -94,7 +98,7 @@ export async function listAutoBackups(): Promise<StoredBackup[]> {
 }
 
 /** Replaces all data; the current state is backed up first so it can be rolled back. */
-export async function applyImport(preview: ImportPreview, reason = 'Перед импортом'): Promise<void> {
+export async function applyImport(preview: ImportPreview, reason = t('backup.beforeImport')): Promise<void> {
   await createAutoBackup(reason);
   await replaceAll(preview.data);
 }

@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { EmptyState, Page, SegmentedControl, type IconName } from '@/ui';
+import { t } from '@/core/i18n';
 
 export interface PlaceholderTab {
   value: string;
@@ -19,7 +20,7 @@ export function Placeholder({ title, tabs }: { title: string; tabs: PlaceholderT
       large
       toolbar={tabs.length > 1 ? <SegmentedControl options={tabs} value={active} onChange={setActive} /> : undefined}
     >
-      {tab && <EmptyState icon={tab.icon} title={`Этап ${tab.stage}`} text={tab.text} />}
+      {tab && <EmptyState icon={tab.icon} title={t('common.stage', { n: tab.stage })} text={tab.text} />}
     </Page>
   );
 }

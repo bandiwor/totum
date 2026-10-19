@@ -1,0 +1,60 @@
+export const cycle = {
+  weekOf: '{day} · нед. {week}',
+  day: 'День {n}',
+  repeat: 'Повтор',
+  byWeeks: 'По неделям',
+  byWeeksOn: 'Дни подписаны Пн–Вс',
+  byWeeksOff: 'Цикл из любого числа дней',
+  weeks: 'Недель в цикле',
+  days: 'Дней в цикле',
+  weekOneStarts: 'Неделя 1 начинается',
+  dayOneIs: 'День 1 приходится на',
+  daysTitle: 'Дни цикла',
+  todayMark: ' · сегодня',
+} as const;
+
+export const backup = {
+  notJson: 'Это не JSON. Скопируй экспорт целиком, от первой до последней скобки.',
+  wrongFormat: 'Формат не похож на экспорт этого приложения.',
+  badRecord: '«{section}», запись {n}: {message}',
+  badData: 'неверные данные',
+  duplicateId: '«{section}»: повторяется id {id}',
+  unknownSection: 'Раздел «{name}» неизвестен этой версии — он сохранится, но не будет отображаться.',
+  newerSchema: 'Данные из более новой версии приложения (схема {version}). Сначала обнови приложение.',
+  noMigration: 'Нет миграции {from} → {to}',
+  beforeImport: 'Перед импортом',
+  beforeRestore: 'Перед восстановлением',
+  badDate: 'Неверная дата',
+} as const;
+
+export const app = {
+  updateAvailable: 'Доступна новая версия',
+  update: 'Обновить',
+  quickActions: 'Быстрые действия',
+  bootError: 'Ошибка запуска: {message}',
+  tabs: {
+    today: 'Сегодня',
+    plan: 'План',
+    health: 'Здоровье',
+    money: 'Деньги',
+    notes: 'Записи',
+  },
+} as const;
+
+/** Collection names shown in the import summary. */
+export const collections = {
+  places: 'Места',
+  routes: 'Дорога между местами',
+  subjects: 'Предметы',
+  lessonTypes: 'Типы пар',
+  timetables: 'Расписания',
+  lessonOverrides: 'Изменения пар',
+  tasks: 'Задачи',
+  jobs: 'Работа',
+  shiftOverrides: 'Изменения смен',
+  exerciseCategories: 'Категории упражнений',
+  exercises: 'Упражнения',
+  workoutTemplates: 'Тренировки (шаблоны)',
+  workoutOverrides: 'Изменения тренировок',
+  workoutSessions: 'Тренировки (журнал)',
+} as const;

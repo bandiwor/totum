@@ -1,20 +1,22 @@
 import { useState } from 'preact/hooks';
-import { formatTime, type Minutes } from '@/core/date';
+import { formatDuration, formatTime, type Minutes } from '@/core/date';
 import { haptic } from '@/core/haptics';
-import { Button, EmptyState, Form, List, ListRow, NumberStepper, openSheet, Page, Section, SheetActions, TimeField, TimeRange } from '@/ui';
-import { bells, timetables, type BellSlot } from './model';
+import { t } from '@/core/i18n';
+import { Button, EmptyState, Field, Form, List, ListRow, NumberStepper, openSheet, Page, Section, SheetActions, TimeField, TimeRange } from '@/ui';
+import { bells, buildBells, timetables, type BellSlot } from './model';
 
 function setSlots(slots: BellSlot[]): void {
-  bells.set({ slots: slots.map((s, i) => ({ ...s, n: i + 1 })) });
+  const sorted = [...slots].sort((a, b) => a.start - b.start);
+  bells.set({ slots: sorted.map((s, i) => ({ ...s, n: i + 1 })) });
   syncTimetables();
 }
 
 /** Lessons tied to a bell number follow the new times. */
 function syncTimetables(): void {
   const byN = new Map(bells.value.value.slots.map((s) => [s.n, s]));
-  for (const t of timetables.all.value) {
+  for (const tt of timetables.all.value) {
     let changed = false;
-    const days = t.cycle.days.map((day) =>
+    const days = tt.cycle.days.map((day) =>
       day.map((l) => {
         const slot = l.bell !== null ? byN.get(l.bell) : undefined;
         if (!slot || (slot.start === l.start && slot.end === l.end)) return l;
@@ -22,7 +24,7 @@ function syncTimetables(): void {
         return { ...l, start: slot.start, end: slot.end };
       }),
     );
-    if (changed) timetables.update(t.id, { cycle: { ...t.cycle, days } });
+    if (changed) timetables.update(tt.id, { cycle: { ...tt.cycle, days } });
   }
 }
 
@@ -33,7 +35,14 @@ function SlotForm({ index, close }: { index: number; close: () => void }) {
   const [end, setEnd] = useState(slot?.end ?? 10 * 60 + 30);
   return (
     <Form>
-      <TimeRange start={start} end={end} onChange={(s, e) => { setStart(s); setEnd(e); }} />
+      <TimeRange
+        start={start}
+        end={end}
+        onChange={(s, e) => {
+          setStart(s);
+          setEnd(e);
+        }}
+      />
       <SheetActions>
         <Button
           variant="primary"
@@ -44,7 +53,7 @@ function SlotForm({ index, close }: { index: number; close: () => void }) {
             close();
           }}
         >
-          Сохранить
+          {t('common.save')}
         </Button>
         <Button
           variant="danger"
@@ -55,7 +64,7 @@ function SlotForm({ index, close }: { index: number; close: () => void }) {
             close();
           }}
         >
-          Удалить
+          {t('common.delete')}
         </Button>
       </SheetActions>
     </Form>
@@ -63,36 +72,49 @@ function SlotForm({ index, close }: { index: number; close: () => void }) {
 }
 
 function GeneratorForm({ close }: { close: () => void }) {
-  const [first, setFirst] = useState<Minutes>(8 * 60 + 30);
-  const [count, setCount] = useState(6);
-  const [length, setLength] = useState(90);
-  const [pause, setPause] = useState(10);
-  const [bigAfter, setBigAfter] = useState(3);
-  const [bigPause, setBigPause] = useState(30);
-
-  const preview: BellSlot[] = [];
-  let t = first;
-  for (let n = 1; n <= count && t + length <= 1440; n++) {
-    preview.push({ n, start: t, end: t + length });
-    t += length + (n === bigAfter ? bigPause : pause);
-  }
+  const current = bells.value.value.slots;
+  const [first, setFirst] = useState<Minutes>(current[0]?.start ?? 8 * 60 + 30);
+  const [count, setCount] = useState(current.length || 6);
+  const [length, setLength] = useState(current[0] ? current[0].end - current[0].start : 90);
+  // Breaks of the existing grid are the starting point; new gaps default to 10 minutes.
+  const [breaks, setBreaks] = useState<Minutes[]>(() =>
+    Array.from({ length: 9 }, (_, i) => {
+      const a = current[i];
+      const b = current[i + 1];
+      return a && b ? b.start - a.end : 10;
+    }),
+  );
+  const preview = buildBells(first, count, length, breaks);
 
   return (
     <Form>
-      <TimeField label="Начало первой пары" value={first} onChange={setFirst} />
+      <TimeField label={t('schedule.firstStart')} value={first} onChange={setFirst} />
       <div class="ui-row2">
-        <NumberStepper label="Пар" value={count} min={1} max={10} onChange={setCount} />
-        <NumberStepper label="Длительность" value={length} step={5} min={20} max={240} unit="мин" onChange={setLength} />
+        <NumberStepper label={t('schedule.pairsCount')} value={count} min={1} max={10} onChange={setCount} />
+        <NumberStepper label={t('schedule.duration')} value={length} step={5} min={20} max={240} unit={t('units.min')} onChange={setLength} />
       </div>
-      <div class="ui-row2">
-        <NumberStepper label="Перемена" value={pause} step={5} min={0} max={60} unit="мин" onChange={setPause} />
-        <NumberStepper label="Большая после" value={bigAfter} min={0} max={count} unit="пары" onChange={setBigAfter} />
-      </div>
-      {bigAfter > 0 && <NumberStepper label="Большая перемена" value={bigPause} step={5} min={0} max={120} unit="мин" onChange={setBigPause} />}
+      {count > 1 && (
+        <Field label={t('schedule.breaks')}>
+          <div class="bells-breaks">
+            {Array.from({ length: count - 1 }, (_, i) => (
+              <NumberStepper
+                key={i}
+                label={t('schedule.breakAfter', { n: i + 1 })}
+                value={breaks[i] ?? 10}
+                step={5}
+                min={0}
+                max={180}
+                unit={t('units.min')}
+                onChange={(v) => setBreaks((b) => b.map((x, j) => (j === i ? v : x)))}
+              />
+            ))}
+          </div>
+        </Field>
+      )}
       <div class="bells-preview num">
         {preview.map((s) => (
           <span key={s.n}>
-            {s.n}) {formatTime(s.start)}–{formatTime(s.end)}
+            {s.n}) {t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })}
           </span>
         ))}
       </div>
@@ -107,7 +129,7 @@ function GeneratorForm({ close }: { close: () => void }) {
             close();
           }}
         >
-          Применить
+          {t('schedule.apply')}
         </Button>
       </SheetActions>
     </Form>
@@ -118,43 +140,46 @@ export function BellsScreen() {
   const slots = bells.value.value.slots;
   const addSlot = (): void => {
     const last = slots[slots.length - 1];
+    const prev = slots[slots.length - 2];
     const len = last ? last.end - last.start : 90;
-    const start = last ? last.end + 10 : 9 * 60;
+    const gap = last && prev ? last.start - prev.end : 10;
+    const start = last ? last.end + gap : 9 * 60;
     if (start + len > 1440) return;
     setSlots([...slots, { n: slots.length + 1, start, end: start + len }]);
     haptic('light');
   };
-  const openGenerator = () => void openSheet((close) => <GeneratorForm close={close} />, { title: 'Заполнить сетку' });
+  const openGenerator = (): void => void openSheet((close) => <GeneratorForm close={close} />, { title: t('schedule.fillTitle') });
 
   return (
-    <Page title="Сетка звонков" back>
+    <Page title={t('schedule.bells')} back>
       {slots.length === 0 ? (
         <EmptyState
           icon="clock"
-          title="Сетка не задана"
-          text="Задай время пар один раз — потом в расписании выбираешь только номер."
-          action={<Button variant="primary" onClick={openGenerator}>Заполнить</Button>}
+          title={t('schedule.bellsEmpty')}
+          text={t('schedule.bellsEmptyText')}
+          action={<Button variant="primary" onClick={openGenerator}>{t('schedule.fill')}</Button>}
         />
       ) : (
-        <Section
-          title="Пары"
-          action={<Button size="sm" variant="ghost" onClick={openGenerator}>Заполнить заново</Button>}
-        >
+        <Section title={t('schedule.pairs')} action={<Button size="sm" variant="ghost" onClick={openGenerator}>{t('schedule.refill')}</Button>}>
           <List>
-            {slots.map((s, i) => (
-              <ListRow
-                key={s.n}
-                title={`${s.n} пара`}
-                value={`${formatTime(s.start)}–${formatTime(s.end)}`}
-                chevron
-                onClick={() => openSheet((close) => <SlotForm index={i} close={close} />, { title: `${s.n} пара` })}
-              />
-            ))}
+            {slots.map((s, i) => {
+              const prev = slots[i - 1];
+              return (
+                <ListRow
+                  key={s.n}
+                  title={t('schedule.lessonN', { n: s.n })}
+                  {...(prev ? { subtitle: t('schedule.breakBefore', { duration: formatDuration(s.start - prev.end) }) } : {})}
+                  value={t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })}
+                  chevron
+                  onClick={() => openSheet((close) => <SlotForm index={i} close={close} />, { title: t('schedule.lessonN', { n: s.n }) })}
+                />
+              );
+            })}
           </List>
           <Button block icon="plus" onClick={addSlot}>
-            Добавить пару
+            {t('schedule.addLesson')}
           </Button>
-          <p class="settings__note">Пары в расписании, выбранные по номеру, сдвигаются вместе с сеткой.</p>
+          <p class="settings__note">{t('schedule.bellsHint')}</p>
         </Section>
       )}
     </Page>

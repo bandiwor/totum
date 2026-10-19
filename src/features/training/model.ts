@@ -6,6 +6,7 @@ import { resolveDay } from '@/core/plan';
 import { defineOverrides } from '@/core/store/overrides';
 import { entityFields, isoDate, minutes } from '@/core/store/schema';
 import { defineCollection, defineDoc, type Entity } from '@/core/store/store';
+import { t } from '@/core/i18n';
 
 // ── Library ────────────────────────────────────────────────────────────────
 
@@ -16,7 +17,7 @@ export interface ExerciseCategory extends Entity {
 }
 
 export const categories = defineCollection<ExerciseCategory>('exerciseCategories', {
-  label: 'Категории упражнений',
+  label: 'collections.exerciseCategories',
   schema: v.object({ ...entityFields, name: v.string(), color: v.string(), order: v.number() }),
 });
 
@@ -36,7 +37,7 @@ export interface Exercise extends Entity {
 }
 
 export const exercises = defineCollection<Exercise>('exercises', {
-  label: 'Упражнения',
+  label: 'collections.exercises',
   schema: v.object({
     ...entityFields,
     name: v.string(),
@@ -95,7 +96,7 @@ const targetEntries = {
 };
 
 export const templates = defineCollection<WorkoutTemplate>('workoutTemplates', {
-  label: 'Тренировки (шаблоны)',
+  label: 'collections.workoutTemplates',
   schema: v.object({
     ...entityFields,
     name: v.string(),
@@ -121,7 +122,7 @@ export interface TemplateSlot extends SlotData {
 export const program = defineDoc<{ cycle: Cycle<TemplateSlot[]> | null }>('trainingProgram', { cycle: null });
 
 const slotEntries = { templateId: v.string(), start: minutes, end: minutes, placeId: v.nullable(v.string()) };
-export const workoutOverrides = defineOverrides<SlotData>('workoutOverrides', 'Изменения тренировок', slotEntries);
+export const workoutOverrides = defineOverrides<SlotData>('workoutOverrides', 'collections.workoutOverrides', slotEntries);
 
 export interface PlannedWorkout {
   key: string;
@@ -197,7 +198,7 @@ export interface WorkoutSession extends Entity {
 }
 
 export const sessions = defineCollection<WorkoutSession>('workoutSessions', {
-  label: 'Тренировки (журнал)',
+  label: 'collections.workoutSessions',
   schema: v.object({
     ...entityFields,
     date: isoDate,
@@ -239,20 +240,16 @@ export function sessionForSlot(date: ISODate, slotKey: string): WorkoutSession |
 
 // ── Labels ─────────────────────────────────────────────────────────────────
 
-export const RULE_LABELS: Record<ProgressionRule, string> = {
-  double: 'Двойная',
-  linear: 'Линейная',
-  reps: 'Повторы',
-  none: 'Без авто',
-};
+export const RULES: readonly ProgressionRule[] = ['double', 'linear', 'reps', 'none'];
+export const MEASURES: readonly Measure[] = ['weight', 'reps', 'time'];
+export const WELLBEING = [1, 2, 3, 4, 5] as const;
 
-export const MEASURE_LABELS: Record<Measure, string> = {
-  weight: 'Вес × повторы',
-  reps: 'Повторы',
-  time: 'Время',
-};
-
-export const WELLBEING_LABELS = ['Плохо', 'Так себе', 'Норм', 'Хорошо', 'Отлично'] as const;
+export const ruleLabel = (r: ProgressionRule): string => t(`training.rule.${r}`);
+export const measureLabel = (m: Measure): string => t(`training.measure.${m}`);
+export function wellbeingLabel(n: number): string {
+  const level = Math.min(5, Math.max(1, Math.round(n))) as (typeof WELLBEING)[number];
+  return t(`training.wellbeingLevels.l${level}`);
+}
 
 export function formatKg(n: number): string {
   return `${Number.isInteger(n) ? n : n.toFixed(1).replace(/\.0$/, '')}`;
@@ -260,19 +257,19 @@ export function formatKg(n: number): string {
 
 /** "80×8", "12 повт", "45 с". */
 export function formatSet(set: Pick<SetLog, 'weight' | 'reps'>, measure: Measure): string {
-  if (measure === 'time') return `${set.reps} с`;
-  if (measure === 'reps') return set.weight > 0 ? `+${formatKg(set.weight)}×${set.reps}` : `${set.reps} повт`;
-  return `${formatKg(set.weight)}×${set.reps}`;
+  if (measure === 'time') return t('training.fmtTime', { n: set.reps });
+  if (measure === 'reps') return set.weight > 0 ? t('training.fmtRepsPlus', { weight: formatKg(set.weight), reps: set.reps }) : t('training.fmtReps', { n: set.reps });
+  return t('training.fmtWeight', { weight: formatKg(set.weight), reps: set.reps });
 }
 
 /** "3×8–12 · 80 кг · RPE 8". */
-export function formatTarget(t: Target, measure: Measure): string {
-  const unit = measure === 'time' ? ' с' : '';
-  const range = t.rule === 'double' && t.repMin !== t.repMax ? `${t.repMin}–${t.repMax}` : `${t.repGoal}`;
-  const parts = [`${t.sets}×${range}${unit}`];
-  if (t.rule === 'double' && t.repMin !== t.repMax) parts.push(`цель ${t.repGoal}`);
-  if (measure === 'weight' || t.weight > 0) parts.push(`${formatKg(t.weight)} кг`);
-  if (t.rpe !== null) parts.push(`RPE ${t.rpe}`);
+export function formatTarget(target: Target, measure: Measure): string {
+  const ranged = target.rule === 'double' && target.repMin !== target.repMax;
+  const range = ranged ? t('time.range', { from: target.repMin, to: target.repMax }) : `${target.repGoal}`;
+  const parts = [`${target.sets}×${range}${measure === 'time' ? ` ${t('units.sec')}` : ''}`];
+  if (ranged) parts.push(t('training.fmtGoal', { n: target.repGoal }));
+  if (measure === 'weight' || target.weight > 0) parts.push(t('training.fmtKg', { n: formatKg(target.weight) }));
+  if (target.rpe !== null) parts.push(t('training.fmtRpe', { n: target.rpe }));
   return parts.join(' · ');
 }
 
@@ -283,16 +280,16 @@ const trainingMeta = defineDoc<{ seeded: boolean }>('trainingMeta', { seeded: fa
 export function seedTraining(): void {
   if (trainingMeta.value.value.seeded) return;
   if (categories.all.value.length === 0) {
-    const defaults: [string, string][] = [
-      ['Грудь', 'c1'],
-      ['Спина', 'c2'],
-      ['Ноги', 'c3'],
-      ['Плечи', 'c5'],
-      ['Руки', 'c6'],
-      ['Пресс', 'c7'],
-      ['Кардио', 'c4'],
-    ];
-    defaults.forEach(([name, color], order) => categories.add({ name, color, order }));
+    const defaults = [
+      ['chest', 'c1'],
+      ['back', 'c2'],
+      ['legs', 'c3'],
+      ['shoulders', 'c5'],
+      ['arms', 'c6'],
+      ['core', 'c7'],
+      ['cardio', 'c4'],
+    ] as const;
+    defaults.forEach(([key, color], order) => categories.add({ name: t(`training.defaultCategories.${key}`), color, order }));
   }
   trainingMeta.set({ seeded: true });
 }

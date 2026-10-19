@@ -29,23 +29,24 @@ import {
   TimeRange,
   type ColorKey,
 } from '@/ui';
-import { activeJobs, jobs, PAY_LABELS, shiftOverrides, shiftsFor, type Job, type PayType, type ShiftData, type TemplateShift } from './model';
+import { activeJobs, jobs, PAY_TYPES, shiftOverrides, shiftsFor, type Job, type ShiftData, type TemplateShift } from './model';
+import { t } from '@/core/i18n';
 
 function createJob(): void {
-  const job = jobs.add({ name: 'Работа', color: 'c7', placeId: null, payType: 'hour', rate: 0, archived: false, cycle: null });
+  const job = jobs.add({ name: t('work.work'), color: 'c7', placeId: null, payType: 'hour', rate: 0, archived: false, cycle: null });
   navigate(`plan/work/${job.id}`);
 }
 
 export function JobsScreen() {
   const list = jobs.all.value;
   return (
-    <Page title="Работа" back actions={<Button size="sm" variant="ghost" icon="plus" onClick={createJob}>Новая</Button>}>
+    <Page title={t('work.work')} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={createJob}>{t('work.newJob')}</Button>}>
       {list.length === 0 ? (
         <EmptyState
           icon="briefcase"
-          title="Работы нет"
-          text="Смены попадут в расписание дня, дорога и свободное время посчитаются автоматически."
-          action={<Button variant="primary" icon="plus" onClick={createJob}>Добавить</Button>}
+          title={t('work.noJobs')}
+          text={t('work.noJobsText')}
+          action={<Button variant="primary" icon="plus" onClick={createJob}>{t('common.add')}</Button>}
         />
       ) : (
         <Section>
@@ -55,8 +56,8 @@ export function JobsScreen() {
                 key={j.id}
                 leading={<span class="color-dot" style={{ background: colorVar(j.color) }} />}
                 title={j.name}
-                subtitle={j.rate > 0 ? `${j.rate} ${PAY_LABELS[j.payType]}` : 'Ставка не указана'}
-                trailing={j.archived ? <Badge>Архив</Badge> : undefined}
+                subtitle={j.rate > 0 ? t('work.rateLine', { rate: j.rate, per: t(`work.pay.${j.payType}`) }) : t('work.noRate')}
+                trailing={j.archived ? <Badge>{t('common.archive')}</Badge> : undefined}
                 chevron
                 onClick={() => navigate(`plan/work/${j.id}`)}
               />
@@ -69,17 +70,17 @@ export function JobsScreen() {
 }
 
 function shiftsSummary(day: TemplateShift[]): string {
-  if (day.length === 0) return 'Выходной';
-  return [...day].sort((a, b) => a.start - b.start).map((s) => `${formatTime(s.start)}–${formatTime(s.end)}`).join(', ');
+  if (day.length === 0) return t('work.dayOff');
+  return [...day].sort((a, b) => a.start - b.start).map((s) => t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })).join(', ');
 }
 
 export function JobEditor({ params }: RouteProps) {
   const job = jobs.byId(params.id);
-  if (!job) return <Page title="Работа" back><EmptyState icon="briefcase" title="Не найдено" /></Page>;
+  if (!job) return <Page title={t('work.work')} back><EmptyState icon="briefcase" title={t('common.notFound')} /></Page>;
   const patch = (p: Partial<Job>): void => void jobs.update(job.id, p);
 
   const remove = async (): Promise<void> => {
-    if (await confirm({ title: `Удалить «${job.name}»?`, message: 'Можно вместо этого отправить в архив.', confirmLabel: 'Удалить', danger: true })) {
+    if (await confirm({ title: t('schedule.deleteNamed', { name: job.name }), message: t('work.deleteHint'), confirmLabel: t('common.delete'), danger: true })) {
       jobs.remove(job.id);
       navigate('plan/work', { replace: true });
     }
@@ -89,32 +90,32 @@ export function JobEditor({ params }: RouteProps) {
     <Page title={job.name} back>
       <Section>
         <Form>
-          <TextField label="Название" value={job.name} onValue={(name) => patch({ name })} />
-          <Field label="Цвет">
+          <TextField label={t('common.name')} value={job.name} onValue={(name) => patch({ name })} />
+          <Field label={t('common.color')}>
             <ColorPicker value={job.color} onChange={(color: ColorKey) => patch({ color })} />
           </Field>
-          <Field label="Место" hint="Для расчёта дороги">
+          <Field label={t('common.place')} hint={t('work.placeHint')}>
             <PlacePicker value={job.placeId} onChange={(placeId) => patch({ placeId })} />
           </Field>
-          <Field label="Оплата">
+          <Field label={t('work.payment')}>
             <ChoiceChips
-              options={(Object.keys(PAY_LABELS) as PayType[]).map((p) => ({ value: p, label: PAY_LABELS[p] }))}
+              options={PAY_TYPES.map((p) => ({ value: p, label: t(`work.pay.${p}`) }))}
               value={job.payType}
               onChange={(payType) => payType && patch({ payType })}
             />
           </Field>
-          <NumberStepper label="Ставка" value={job.rate} step={job.payType === 'hour' ? 50 : 500} min={0} onChange={(rate) => patch({ rate })} />
+          <NumberStepper label={t('work.rate')} value={job.rate} step={job.payType === 'hour' ? 50 : 500} min={0} onChange={(rate) => patch({ rate })} />
         </Form>
       </Section>
 
-      <Section title="Регулярные смены">
+      <Section title={t('work.regular')}>
         <List>
           <ListRow
-            title="По графику"
-            subtitle={job.cycle ? 'Смены повторяются по циклу' : 'Только разовые смены'}
+            title={t('work.bySchedule')}
+            subtitle={job.cycle ? t('work.byScheduleOn') : t('work.byScheduleOff')}
             trailing={
               <Switch
-                label="По графику"
+                label={t('work.bySchedule')}
                 checked={job.cycle !== null}
                 onChange={(on) =>
                   patch({ cycle: on ? { anchor: startOfWeek(today()), days: Array.from({ length: 7 }, () => []), weekAligned: true } : null })
@@ -131,16 +132,16 @@ export function JobEditor({ params }: RouteProps) {
           makeDay={() => []}
           summary={(day) => shiftsSummary(day)}
           onOpenDay={(i) => navigate(`plan/work/${job.id}/day/${i}`)}
-          title="Смены по дням"
+          title={t('work.shiftsByDay')}
         />
       )}
 
       <Section>
         <List>
-          <ListRow title="В архиве" subtitle="Смены не показываются" trailing={<Switch label="Архив" checked={job.archived} onChange={(archived) => patch({ archived })} />} />
+          <ListRow title={t('common.archived')} subtitle={t('work.archivedHint')} trailing={<Switch label={t('common.archive')} checked={job.archived} onChange={(archived) => patch({ archived })} />} />
         </List>
         <Button variant="danger" block icon="trash" onClick={() => void remove()}>
-          Удалить
+          {t('common.delete')}
         </Button>
       </Section>
     </Page>
@@ -151,7 +152,7 @@ function ShiftTimeForm({
   initial,
   onSave,
   onDelete,
-  saveLabel = 'Сохранить',
+  saveLabel = t('common.save'),
   jobChoice = false,
   close,
 }: {
@@ -166,7 +167,7 @@ function ShiftTimeForm({
   return (
     <Form>
       {jobChoice && (
-        <Field label="Работа">
+        <Field label={t('work.work')}>
           <ChoiceChips
             options={activeJobs.value.map((j) => ({ value: j.id, label: j.name, color: colorVar(j.color) }))}
             value={d.jobId}
@@ -175,7 +176,7 @@ function ShiftTimeForm({
         </Field>
       )}
       <TimeRange start={d.start} end={d.end} onChange={(start, end) => setD({ ...d, start, end })} />
-      <p class="sheet-note">Длительность: {formatDuration(d.end - d.start)}</p>
+      <p class="sheet-note">{t('work.durationLine', { duration: formatDuration(d.end - d.start) })}</p>
       <SheetActions>
         <Button
           variant="primary"
@@ -193,7 +194,7 @@ function ShiftTimeForm({
         </Button>
         {onDelete && (
           <Button variant="danger" block icon="trash" onClick={() => { onDelete(); close(); }}>
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -205,7 +206,7 @@ export function JobDayEditor({ params }: RouteProps) {
   const job = jobs.byId(params.id);
   const index = Number(params.index);
   const day = job?.cycle?.days[index];
-  if (!job?.cycle || !day) return <Page title="День" back><EmptyState icon="briefcase" title="Не найдено" /></Page>;
+  if (!job?.cycle || !day) return <Page title={t('schedule.day')} back><EmptyState icon="briefcase" title={t('common.notFound')} /></Page>;
   const cycle = job.cycle;
 
   const setDay = (next: TemplateShift[]): void =>
@@ -221,18 +222,18 @@ export function JobDayEditor({ params }: RouteProps) {
           close={close}
         />
       ),
-      { title: shift ? 'Смена' : 'Новая смена' },
+      { title: shift ? t('work.shift') : t('work.newShift') },
     );
 
   return (
-    <Page title={cycleDayLabel(cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => open(null)}>Смена</Button>}>
+    <Page title={cycleDayLabel(cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => open(null)}>{t('work.shift')}</Button>}>
       {day.length === 0 ? (
-        <EmptyState icon="sparkles" title="Выходной" action={<Button variant="primary" icon="plus" onClick={() => open(null)}>Добавить смену</Button>} />
+        <EmptyState icon="sparkles" title={t('work.dayOff')} action={<Button variant="primary" icon="plus" onClick={() => open(null)}>{t('work.addShift')}</Button>} />
       ) : (
         <Section>
           <List>
             {[...day].sort((a, b) => a.start - b.start).map((s) => (
-              <ListRow key={s.id} icon="briefcase" title={`${formatTime(s.start)}–${formatTime(s.end)}`} value={formatDuration(s.end - s.start)} onClick={() => open(s)} />
+              <ListRow key={s.id} icon="briefcase" title={t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })} value={formatDuration(s.end - s.start)} onClick={() => open(s)} />
             ))}
           </List>
         </Section>
@@ -250,24 +251,24 @@ export function openShiftSheet(date: ISODate, key: string): void {
     (close) => (
       <>
         <p class="sheet-note">
-          {formatRelativeDay(date)} · {formatTime(shift.data.start)}–{formatTime(shift.data.end)}
-          {shift.modified ? ' · изменена' : ''}
+          {t('schedule.dayHeader', { day: formatRelativeDay(date), from: formatTime(shift.data.start), to: formatTime(shift.data.end) })}
+          {shift.modified ? t('work.modifiedSuffix') : ''}
         </p>
         <ShiftTimeForm
           initial={shift.data}
-          saveLabel="Сохранить на этот день"
+          saveLabel={t('schedule.saveForDay')}
           onSave={(data) => shiftOverrides.modify(date, key, data)}
           onDelete={() => shiftOverrides.cancel(date, key)}
           close={close}
         />
         {shift.modified && (
           <Button block variant="ghost" icon="history" onClick={() => { shiftOverrides.reset(date, key); close(); }}>
-            Вернуть как в графике
+            {t('work.restore')}
           </Button>
         )}
       </>
     ),
-    { title: shift.job?.name ?? 'Смена' },
+    { title: shift.job?.name ?? t('work.shift') },
   );
 }
 
@@ -282,11 +283,11 @@ export function openAddShift(date: ISODate): void {
       <ShiftTimeForm
         initial={{ jobId: job.id, start: 9 * 60, end: 18 * 60 }}
         jobChoice={activeJobs.value.length > 1}
-        saveLabel="Добавить смену"
+        saveLabel={t('work.addShift')}
         onSave={(data) => shiftOverrides.add(date, data)}
         close={close}
       />
     ),
-    { title: 'Разовая смена' },
+    { title: t('work.oneOffShift') },
   );
 }

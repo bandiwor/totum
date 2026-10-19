@@ -1,14 +1,14 @@
 import { signal } from '@preact/signals';
-import { addDays, formatDayMonth, formatDuration, startOfWeek, today, toJSDate, type ISODate } from '@/core/date';
+import { addDays, formatDayMonth, formatDuration, startOfWeek, today, toJSDate, weekdayShort, type ISODate } from '@/core/date';
 import { haptic } from '@/core/haptics';
 import { navigate } from '@/core/router';
 import { settings } from '@/core/settings';
 import { selectDate } from '@/features/today/selectedDate';
 import { dayTimeline } from '@/features/today/useDayTimeline';
 import { Card, cx, Icon, Stat } from '@/ui';
+import { t } from '@/core/i18n';
 
 const weekStart = signal<ISODate>(startOfWeek(today()));
-const WD = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 const GRID_H = 520;
 
 /** Seven columns of the awake window: blocks, travel and free time at a glance. */
@@ -37,18 +37,18 @@ export function WeekView() {
   return (
     <>
       <div class="week__nav">
-        <button type="button" class="ui-strip__nav" aria-label="Предыдущая неделя" onClick={() => shift(-1)}>
+        <button type="button" class="ui-strip__nav" aria-label={t('time.prevWeek')} onClick={() => shift(-1)}>
           <Icon name="chevronLeft" size={18} />
         </button>
         <span class="week__range">
-          {formatDayMonth(start)} — {formatDayMonth(addDays(start, 6))}
+          {t('plan.weekRange', { from: formatDayMonth(start), to: formatDayMonth(addDays(start, 6)) })}
         </span>
         {start !== startOfWeek(now) && (
           <button type="button" class="ui-strip__today" onClick={() => (weekStart.value = startOfWeek(now))}>
-            Сейчас
+            {t('time.now')}
           </button>
         )}
-        <button type="button" class="ui-strip__nav" aria-label="Следующая неделя" onClick={() => shift(1)}>
+        <button type="button" class="ui-strip__nav" aria-label={t('time.nextWeek')} onClick={() => shift(1)}>
           <Icon name="chevronRight" size={18} />
         </button>
       </div>
@@ -58,7 +58,7 @@ export function WeekView() {
           <span />
           {days.map((d, i) => (
             <span key={d} class={cx('week__day', d === now && 'is-today')}>
-              <span>{WD[i]}</span>
+              <span>{weekdayShort(i)}</span>
               <span class="num">{toJSDate(d).getDate()}</span>
             </span>
           ))}
@@ -98,9 +98,9 @@ export function WeekView() {
         </div>
         <div class="week__foot">
           <span />
-          {timelines.map((t, i) => (
+          {timelines.map((tl, i) => (
             <span key={i} class="num">
-              {Math.round(t.free.total / 60)}ч
+              {t('time.hoursShort', { h: Math.round(tl.free.total / 60) })}
             </span>
           ))}
         </div>
@@ -108,13 +108,13 @@ export function WeekView() {
 
       <div class="week__stats">
         <Card>
-          <Stat label="Свободно за неделю" value={formatDuration(totalFree)} />
+          <Stat label={t('plan.freeWeek')} value={formatDuration(totalFree)} />
         </Card>
         <Card>
-          <Stat label="Занято" value={formatDuration(totalBusy)} />
+          <Stat label={t('plan.busy')} value={formatDuration(totalBusy)} />
         </Card>
       </div>
-      <p class="settings__note">Зелёное — свободно, штриховка — дорога. Нажми на день, чтобы открыть его.</p>
+      <p class="settings__note">{t('plan.weekLegend')}</p>
     </>
   );
 }

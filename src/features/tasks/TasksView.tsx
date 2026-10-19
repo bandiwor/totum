@@ -5,6 +5,7 @@ import { Button, ChoiceChips, colorVar, EmptyState, List, Section } from '@/ui';
 import { byDue, openTasks, overdueTasks, tasks } from './model';
 import { openTaskForm } from './TaskForm';
 import { TaskRow } from './TaskRow';
+import { t } from '@/core/i18n';
 
 type Filter = 'open' | 'homework' | 'done';
 const filter = signal<Filter>('open');
@@ -20,12 +21,12 @@ export function TasksView() {
   const open = openTasks.value.filter(match);
   const groups =
     f === 'done'
-      ? [{ title: 'Выполнено', items: tasks.all.value.filter((t) => t.done && match(t)).sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)).slice(0, 50) }]
+      ? [{ title: t('tasks.done'), today: false, items: tasks.all.value.filter((x) => x.done && match(x)).sort((a, b) => (b.doneAt ?? 0) - (a.doneAt ?? 0)).slice(0, 50) }]
       : [
-          { title: 'Просрочено', items: overdueTasks(now).filter(match) },
-          { title: 'Сегодня', items: open.filter((t) => t.date === now) },
-          { title: 'Дальше', items: open.filter((t) => t.date !== null && compareDates(t.date, now) > 0).sort(byDue) },
-          { title: 'Без даты', items: open.filter((t) => t.date === null) },
+          { title: t('tasks.overdue'), today: false, items: overdueTasks(now).filter(match) },
+          { title: t('tasks.today'), today: true, items: open.filter((x) => x.date === now) },
+          { title: t('tasks.later'), today: false, items: open.filter((x) => x.date !== null && compareDates(x.date, now) > 0).sort(byDue) },
+          { title: t('tasks.noDate'), today: false, items: open.filter((x) => x.date === null) },
         ];
   const empty = groups.every((g) => g.items.length === 0);
 
@@ -33,11 +34,7 @@ export function TasksView() {
     <>
       <div class="tasks__filters">
         <ChoiceChips
-          options={[
-            { value: 'open', label: 'Активные' },
-            { value: 'homework', label: 'ДЗ' },
-            { value: 'done', label: 'Выполненные' },
-          ]}
+          options={(['open', 'homework', 'done'] as const).map((value) => ({ value, label: t(`tasks.filters.${value}`) }))}
           value={f}
           onChange={(v) => v && (filter.value = v)}
         />
@@ -53,17 +50,17 @@ export function TasksView() {
       {empty ? (
         <EmptyState
           icon="tasks"
-          title={f === 'done' ? 'Пока ничего не выполнено' : 'Задач нет'}
-          action={f !== 'done' ? <Button variant="primary" icon="plus" onClick={() => openTaskForm()}>Новая задача</Button> : undefined}
+          title={f === 'done' ? t('tasks.nothingDone') : t('tasks.noTasks')}
+          action={f !== 'done' ? <Button variant="primary" icon="plus" onClick={() => openTaskForm()}>{t('tasks.newTask')}</Button> : undefined}
         />
       ) : (
         groups
           .filter((g) => g.items.length > 0)
           .map((g) => (
-            <Section key={g.title} title={`${g.title} · ${g.items.length}`}>
+            <Section key={g.title} title={t('tasks.groupTitle', { title: g.title, count: g.items.length })}>
               <List>
-                {g.items.map((t) => (
-                  <TaskRow key={t.id} task={t} showDate={g.title !== 'Сегодня'} />
+                {g.items.map((x) => (
+                  <TaskRow key={x.id} task={x} showDate={!g.today} />
                 ))}
               </List>
             </Section>

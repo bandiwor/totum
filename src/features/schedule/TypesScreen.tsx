@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
 import { Button, ColorPicker, colorVar, Field, Form, IconButton, List, ListRow, openSheet, Page, Section, SheetActions, TextField, type ColorKey } from '@/ui';
 import { lessonTypes, sortedLessonTypes, timetables, type LessonType } from './model';
+import { t } from '@/core/i18n';
 
 function TypeForm({ type, close }: { type: LessonType | null; close: () => void }) {
   const [name, setName] = useState(type?.name ?? '');
@@ -20,14 +21,14 @@ function TypeForm({ type, close }: { type: LessonType | null; close: () => void 
 
   return (
     <Form>
-      <TextField label="Название" value={name} onValue={setName} placeholder="Коллоквиум" autoFocus={!type} />
-      <TextField label="Сокращение" value={short} onValue={setShort} placeholder="Кол" maxLength={5} />
-      <Field label="Цвет">
+      <TextField label={t('common.name')} value={name} onValue={setName} placeholder={t('schedule.typePlaceholder')} autoFocus={!type} />
+      <TextField label={t('schedule.short')} value={short} onValue={setShort} placeholder={t('schedule.shortPlaceholder')} maxLength={5} />
+      <Field label={t('common.color')}>
         <ColorPicker value={color} onChange={(c: ColorKey) => setColor(c)} />
       </Field>
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!name.trim()} feedback={false} onClick={save}>
-          Сохранить
+          {t('common.save')}
         </Button>
         {type && !used && (
           <Button
@@ -39,7 +40,7 @@ function TypeForm({ type, close }: { type: LessonType | null; close: () => void 
               close();
             }}
           >
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -48,7 +49,7 @@ function TypeForm({ type, close }: { type: LessonType | null; close: () => void 
 }
 
 const openForm = (type: LessonType | null) =>
-  void openSheet((close) => <TypeForm type={type} close={close} />, { title: type ? type.name : 'Новый тип' });
+  void openSheet((close) => <TypeForm type={type} close={close} />, { title: type ? type.name : t('schedule.newType') });
 
 function move(type: LessonType, dir: -1 | 1): void {
   const list = sortedLessonTypes.value;
@@ -62,21 +63,21 @@ function move(type: LessonType, dir: -1 | 1): void {
 export function TypesScreen() {
   const list = sortedLessonTypes.value;
   return (
-    <Page title="Типы пар" back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openForm(null)}>Новый</Button>}>
+    <Page title={t('schedule.types')} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openForm(null)}>{t('common.newM')}</Button>}>
       <Section>
         <List>
-          {list.map((t, i) => (
+          {list.map((type, i) => (
             <ListRow
-              key={t.id}
-              leading={<span class="color-dot" style={{ background: colorVar(t.color) }} />}
-              title={t.name}
-              subtitle={t.short}
+              key={type.id}
+              leading={<span class="color-dot" style={{ background: colorVar(type.color) }} />}
+              title={type.name}
+              subtitle={type.short}
               trailing={
                 <span class="reorder">
-                  <IconButton icon="chevronDown" label="Ниже" disabled={i === list.length - 1} onClick={(e) => { e.stopPropagation(); move(t, 1); }} />
+                  <IconButton icon="chevronDown" label={t('schedule.down')} disabled={i === list.length - 1} onClick={(e) => { e.stopPropagation(); move(type, 1); }} />
                 </span>
               }
-              onClick={() => openForm(t)}
+              onClick={() => openForm(type)}
             />
           ))}
         </List>

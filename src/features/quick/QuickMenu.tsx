@@ -4,6 +4,7 @@ import { haptic } from '@/core/haptics';
 import { registry, type QuickAction, type QuickActionContext } from '@/core/registry';
 import { path } from '@/core/router';
 import { cx, Icon } from '@/ui';
+import { t } from '@/core/i18n';
 
 /** The "super button" menu: a few huge tiles, two taps to anything. */
 export const quickMenuOpen = signal(false);
@@ -58,10 +59,10 @@ export function QuickMenu() {
         {active?.screen ? (
           <div class="quick__screen" key={active.id}>
             <div class="quick__screen-head">
-              <button type="button" class="quick__back" onClick={ctx.back} aria-label="Назад">
+              <button type="button" class="quick__back" onClick={ctx.back} aria-label={t('common.back')}>
                 <Icon name="chevronLeft" />
               </button>
-              <h2>{active.label}</h2>
+              <h2>{t(active.label)}</h2>
             </div>
             <div class="quick__screen-body">
               <active.screen {...ctx} />
@@ -82,7 +83,7 @@ export function QuickMenu() {
                   <span class="ui-tile__icon">
                     <Icon name={a.icon} size={26} />
                   </span>
-                  <span class="ui-tile__label">{a.label}</span>
+                  <span class="ui-tile__label">{t(a.label)}</span>
                   {hint && <span class="ui-tile__hint">{hint}</span>}
                 </button>
               );
@@ -90,7 +91,7 @@ export function QuickMenu() {
           </div>
         )}
       </div>
-      <button type="button" class="quick__close" aria-label="Закрыть" onClick={() => { haptic('light'); ctx.close(); }}>
+      <button type="button" class="quick__close" aria-label={t('common.close')} onClick={() => { haptic('light'); ctx.close(); }}>
         <Icon name="x" size={26} />
       </button>
     </div>

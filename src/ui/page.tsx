@@ -1,6 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { goBack } from '@/core/router';
 import { IconButton } from './primitives';
+import { t } from '@/core/i18n';
 
 /** Scrollable screen with a header. `large` = iOS-style big title for tab roots. */
 export function Page({
@@ -23,7 +24,7 @@ export function Page({
     <div class="ui-page">
       <header class="ui-header">
         <div class="ui-header__bar">
-          {back ? <IconButton icon="chevronLeft" label="Назад" onClick={goBack} /> : <span class="ui-header__spacer" />}
+          {back ? <IconButton icon="chevronLeft" label={t('common.back')} onClick={goBack} /> : <span class="ui-header__spacer" />}
           {!large && <h1 class="ui-header__title">{title}</h1>}
           <div class="ui-header__actions">{actions}</div>
         </div>

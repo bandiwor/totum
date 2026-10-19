@@ -19,6 +19,7 @@ import {
   TextField,
 } from '@/ui';
 import { places, routes, type Place, type Route } from './model';
+import { t } from '@/core/i18n';
 
 function setHome(id: string): void {
   for (const p of places.all.value) if (p.isHome && p.id !== id) places.update(p.id, { isHome: false });
@@ -41,7 +42,7 @@ function PlaceForm({ place, close }: { place: Place | null; close: () => void })
 
   const remove = async (): Promise<void> => {
     if (!place) return;
-    const ok = await confirm({ title: `Удалить «${place.name}»?`, message: 'Дорога до этого места тоже удалится.', confirmLabel: 'Удалить', danger: true });
+    const ok = await confirm({ title: t('schedule.deleteNamed', { name: place.name }), message: t('places.deletePlaceText'), confirmLabel: t('common.delete'), danger: true });
     if (!ok) return;
     for (const r of routes.all.value) if (r.fromId === place.id || r.toId === place.id) routes.remove(r.id);
     places.remove(place.id);
@@ -50,17 +51,17 @@ function PlaceForm({ place, close }: { place: Place | null; close: () => void })
 
   return (
     <Form>
-      <TextField label="Название" value={name} onValue={setName} placeholder="Дом, Корпус 2, Зал…" autoFocus={!place} />
+      <TextField label={t('common.name')} value={name} onValue={setName} placeholder={t('places.namePlaceholder')} autoFocus={!place} />
       <List>
-        <ListRow title="Это дом" subtitle="День начинается и заканчивается здесь" trailing={<Switch label="Дом" checked={isHome} onChange={setIsHome} />} />
+        <ListRow title={t('places.isHome')} subtitle={t('places.isHomeHint')} trailing={<Switch label={t('places.home')} checked={isHome} onChange={setIsHome} />} />
       </List>
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!name.trim()} feedback={false} onClick={save}>
-          Сохранить
+          {t('common.save')}
         </Button>
         {place && (
           <Button variant="danger" block icon="trash" onClick={() => void remove()}>
-            Удалить место
+            {t('places.deletePlace')}
           </Button>
         )}
       </SheetActions>
@@ -93,19 +94,19 @@ function RouteForm({ route, close }: { route: Route | null; close: () => void })
 
   return (
     <Form>
-      <Field label="Откуда">
+      <Field label={t('places.from')}>
         <ChoiceChips options={options} value={fromId} onChange={setFrom} />
       </Field>
-      <Field label="Куда">
+      <Field label={t('places.to')}>
         <ChoiceChips options={options.filter((o) => o.value !== fromId)} value={toId} onChange={setTo} />
       </Field>
-      <NumberStepper label="В пути" value={minutes} step={5} min={0} max={300} unit="мин" onChange={setMinutes} />
+      <NumberStepper label={t('places.onTheWay')} value={minutes} step={5} min={0} max={300} unit={t('units.min')} onChange={setMinutes} />
       <List>
-        <ListRow title="Столько же обратно" trailing={<Switch label="Обратно" checked={bothWays} onChange={setBothWays} />} />
+        <ListRow title={t('places.sameBack')} trailing={<Switch label={t('places.back')} checked={bothWays} onChange={setBothWays} />} />
       </List>
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!valid} feedback={false} onClick={save}>
-          Сохранить
+          {t('common.save')}
         </Button>
         {route && (
           <Button
@@ -117,7 +118,7 @@ function RouteForm({ route, close }: { route: Route | null; close: () => void })
               close();
             }}
           >
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -126,10 +127,10 @@ function RouteForm({ route, close }: { route: Route | null; close: () => void })
 }
 
 const openPlace = (place: Place | null): void => {
-  openSheet((close) => <PlaceForm place={place} close={close} />, { title: place ? 'Место' : 'Новое место' });
+  openSheet((close) => <PlaceForm place={place} close={close} />, { title: place ? t('places.place') : t('places.newPlace') });
 };
 const openRoute = (route: Route | null): void => {
-  openSheet((close) => <RouteForm route={route} close={close} />, { title: route ? 'Дорога' : 'Новая дорога' });
+  openSheet((close) => <RouteForm route={route} close={close} />, { title: route ? t('places.route') : t('places.newRoute') });
 };
 
 export function PlacesScreen() {
@@ -138,31 +139,31 @@ export function PlacesScreen() {
   const name = (id: string): string => places.get(id)?.name ?? '—';
 
   return (
-    <Page title="Места и дорога" back>
-      <Section title="Места" action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openPlace(null)}>Добавить</Button>}>
+    <Page title={t('places.title')} back>
+      <Section title={t('places.places')} action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openPlace(null)}>{t('common.add')}</Button>}>
         {all.length === 0 ? (
-          <EmptyState icon="pin" title="Мест пока нет" text="Добавь дом, корпуса, зал, работу — и время в пути между ними." />
+          <EmptyState icon="pin" title={t('places.noPlaces')} text={t('places.noPlacesText')} />
         ) : (
           <List>
             {all.map((p) => (
-              <ListRow key={p.id} icon="pin" title={p.name} trailing={p.isHome ? <Badge tone="accent">Дом</Badge> : undefined} chevron onClick={() => openPlace(p)} />
+              <ListRow key={p.id} icon="pin" title={p.name} trailing={p.isHome ? <Badge tone="accent">{t('places.home')}</Badge> : undefined} chevron onClick={() => openPlace(p)} />
             ))}
           </List>
         )}
       </Section>
 
       {all.length >= 2 && (
-        <Section title="Время в пути" action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openRoute(null)}>Добавить</Button>}>
+        <Section title={t('places.travelTime')} action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openRoute(null)}>{t('common.add')}</Button>}>
           {allRoutes.length === 0 ? (
-            <EmptyState icon="navigation" title="Дорога не указана" text="Без неё свободное время считается без учёта пути." />
+            <EmptyState icon="navigation" title={t('places.noRoutes')} text={t('places.noRoutesText')} />
           ) : (
             <List>
               {allRoutes.map((r) => (
                 <ListRow
                   key={r.id}
                   icon="navigation"
-                  title={`${name(r.fromId)} ${r.bothWays ? '↔' : '→'} ${name(r.toId)}`}
-                  value={`${r.minutes} мин`}
+                  title={t('places.routeTitle', { from: name(r.fromId), arrow: r.bothWays ? '↔' : '→', to: name(r.toId) })}
+                  value={t('places.minutes', { n: r.minutes })}
                   chevron
                   onClick={() => openRoute(r)}
                 />

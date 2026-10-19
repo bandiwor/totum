@@ -5,6 +5,7 @@ import type { BusyBlock, TimelineSegment } from '@/core/timeline';
 import { places } from '@/features/places/model';
 import { cx, Icon } from '@/ui';
 import { useDayTimeline } from './useDayTimeline';
+import { t } from '@/core/i18n';
 
 type Row =
   | { kind: 'segment'; at: number; seg: TimelineSegment }
@@ -31,7 +32,7 @@ function BlockCard({ date, block, state }: { date: ISODate; block: BusyBlock; st
       <span class="tl-block__card">
         <span class="tl-block__title">{block.title}</span>
         {block.subtitle && <span class="tl-block__sub">{block.subtitle}</span>}
-        {state === 'cancelled' && <span class="tl-block__sub">отменена · нажми, чтобы вернуть</span>}
+        {state === 'cancelled' && <span class="tl-block__sub">{t('today.cancelledHint')}</span>}
         {block.badge && state !== 'cancelled' && <span class="tl-block__badge">{block.badge}</span>}
       </span>
     </button>
@@ -80,8 +81,8 @@ export function TimelineWidget({ date }: { date: ISODate }) {
                 <Icon name="navigation" size={14} />
                 <span class="num">{formatTime(seg.start)}</span>
                 <span>
-                  → {placeName(seg.to)} · {formatDuration(seg.end - seg.start)}
-                  {seg.late > 0 && ` · опоздание ${formatDuration(seg.late)}`}
+                  {t('today.travelTo', { place: placeName(seg.to), duration: formatDuration(seg.end - seg.start) })}
+                  {seg.late > 0 && t('today.late', { duration: formatDuration(seg.late) })}
                 </span>
               </div>
             );
@@ -92,8 +93,8 @@ export function TimelineWidget({ date }: { date: ISODate }) {
               <div key={`f-${seg.start}`} class={cx('tl-free', past && 'is-past')}>
                 <span class="num">{formatTime(seg.start)}</span>
                 <span>
-                  Свободно {formatDuration(len)}
-                  {seg.atHome ? ' · дома' : seg.placeId ? ` · ${placeName(seg.placeId)}` : ''}
+                  {t('today.freeFor', { duration: formatDuration(len) })}
+                  {seg.atHome ? t('today.atHomeSuffix') : seg.placeId ? t('today.placeSuffix', { place: placeName(seg.placeId) }) : ''}
                 </span>
               </div>
             );

@@ -6,24 +6,25 @@ import { currentTab, direction, matchRoute, navigate, path } from '@/core/router
 import { openQuickMenu, QuickMenu } from '@/features/quick/QuickMenu';
 import { FxLayer } from '@/ui/FxLayer';
 import { cx, Icon, OverlayHost } from '@/ui';
+import { t } from '@/core/i18n';
 
 function TabBar() {
   const active = currentTab.value;
   return (
     <nav class="tabbar">
-      {registry.tabs().map((t) => (
+      {registry.tabs().map((tab) => (
         <button
-          key={t.path}
+          key={tab.path}
           type="button"
-          class={cx('ui-tab', active === t.path && 'is-active')}
+          class={cx('ui-tab', active === tab.path && 'is-active')}
           onClick={() => {
-            if (active === t.path && path.value === t.path) return;
+            if (active === tab.path && path.value === tab.path) return;
             haptic('selection');
-            navigate(t.path);
+            navigate(tab.path);
           }}
         >
-          <Icon name={t.icon} size={24} />
-          <span>{t.label}</span>
+          <Icon name={tab.icon} size={24} />
+          <span>{t(tab.label)}</span>
         </button>
       ))}
     </nav>
@@ -34,9 +35,9 @@ function UpdateBanner() {
   if (!updateReady.value) return null;
   return (
     <div class="update-banner">
-      <span>Доступна новая версия</span>
+      <span>{t('app.updateAvailable')}</span>
       <button type="button" onClick={() => { haptic('medium'); applyUpdate(); }}>
-        Обновить
+        {t('app.update')}
       </button>
     </div>
   );
@@ -71,7 +72,7 @@ export function App() {
         )}
       </main>
       <UpdateBanner />
-      <button type="button" class="ui-fab" aria-label="Быстрые действия" onClick={openQuickMenu}>
+      <button type="button" class="ui-fab" aria-label={t('app.quickActions')} onClick={openQuickMenu}>
         <Icon name="plus" size={28} />
       </button>
       <TabBar />

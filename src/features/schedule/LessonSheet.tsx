@@ -8,6 +8,7 @@ import { openTaskForm, toggleTask } from '@/features/tasks/TaskForm';
 import { Badge, Button, Checkbox, colorVar, List, ListRow, openSheet, Section, SheetActions } from '@/ui';
 import { LessonForm, defaultLesson } from './LessonForm';
 import { findLesson, lessonOverrides, timetableFor } from './model';
+import { t } from '@/core/i18n';
 
 /** Details of one dated lesson: homework, one-off changes, jump to the template. */
 function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: string; close: () => void }) {
@@ -17,7 +18,7 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
   const hw = homeworkFor(date, lessonKey);
   // Read tasks so the sheet re-renders when homework changes.
   void tasks.all.value;
-  const place = lesson.placeId ? places.get(lesson.placeId)?.name : lesson.data.online ? 'Онлайн' : null;
+  const place = lesson.placeId ? places.get(lesson.placeId)?.name : lesson.data.online ? t('schedule.online') : null;
   const tt = timetableFor(date);
 
   const editOnce = () =>
@@ -25,12 +26,12 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
       (c) => (
         <LessonForm
           initial={lesson.data}
-          saveLabel="Сохранить на этот день"
+          saveLabel={t('schedule.saveForDay')}
           onSave={(data) => lessonOverrides.modify(date, lessonKey, data)}
           close={c}
         />
       ),
-      { title: 'Только этот день' },
+      { title: t('schedule.onlyThisDay') },
     );
 
   return (
@@ -39,24 +40,24 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
         <span class="lesson-head__bar" />
         <div>
           <p class="lesson-head__time num">
-            {formatRelativeDay(date)} · {formatTime(lesson.data.start)}–{formatTime(lesson.data.end)}
+            {t('schedule.dayHeader', { day: formatRelativeDay(date), from: formatTime(lesson.data.start), to: formatTime(lesson.data.end) })}
           </p>
           <div class="lesson-head__badges">
             {lesson.type && <Badge>{lesson.type.name}</Badge>}
-            {cancelled && <Badge tone="danger">Отменена</Badge>}
-            {lesson.modified && <Badge tone="warning">Изменена</Badge>}
-            {lesson.origin === 'added' && <Badge tone="accent">Разовая</Badge>}
+            {cancelled && <Badge tone="danger">{t('schedule.cancelled')}</Badge>}
+            {lesson.modified && <Badge tone="warning">{t('schedule.modified')}</Badge>}
+            {lesson.origin === 'added' && <Badge tone="accent">{t('schedule.oneOff')}</Badge>}
           </div>
         </div>
       </div>
 
       <List>
-        {lesson.subject?.teacher && <ListRow icon="notes" title={lesson.subject.teacher} subtitle="Преподаватель" />}
-        {(lesson.room || place) && <ListRow icon="pin" title={[lesson.room, place].filter(Boolean).join(' · ')} subtitle="Где" />}
+        {lesson.subject?.teacher && <ListRow icon="notes" title={lesson.subject.teacher} subtitle={t('schedule.teacher')} />}
+        {(lesson.room || place) && <ListRow icon="pin" title={[lesson.room, place].filter(Boolean).join(' · ')} subtitle={t('common.where')} />}
       </List>
 
       <Section
-        title="Домашнее задание"
+        title={t('schedule.homework')}
         action={
           <Button
             size="sm"
@@ -66,7 +67,7 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
               openTaskForm({ preset: { subjectId: lesson.data.subjectId, date, lesson: { date, key: lessonKey } } })
             }
           >
-            ДЗ
+            {t('schedule.homeworkShort')}
           </Button>
         }
       >
@@ -83,7 +84,7 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
             ))}
           </List>
         ) : (
-          <p class="sheet-note">Нет заданий к этой паре.</p>
+          <p class="sheet-note">{t('schedule.noHomework')}</p>
         )}
       </Section>
 
@@ -97,12 +98,12 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
               haptic('success');
             }}
           >
-            Вернуть как в расписании
+            {t('schedule.restore')}
           </Button>
         ) : null}
         {!cancelled && (
           <Button block icon="pencil" onClick={editOnce}>
-            Изменить только этот день
+            {t('schedule.editThisDay')}
           </Button>
         )}
         {!cancelled && (
@@ -116,7 +117,7 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
               if (lesson.origin === 'added') close();
             }}
           >
-            {lesson.origin === 'added' ? 'Удалить разовую пару' : 'Отменить пару'}
+            {lesson.origin === 'added' ? t('schedule.deleteOneOff') : t('schedule.cancelLesson')}
           </Button>
         )}
         {tt && lesson.origin === 'template' && (
@@ -128,7 +129,7 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
               navigate(`plan/timetable/${tt.id}/day/${cycleDayIndex(tt.cycle, date)}`);
             }}
           >
-            Изменить в расписании
+            {t('schedule.editInTimetable')}
           </Button>
         )}
       </SheetActions>
@@ -139,15 +140,15 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
 export function openLessonSheet(date: ISODate, lessonKey: string): void {
   const lesson = findLesson(date, lessonKey);
   openSheet((close) => <LessonDetails date={date} lessonKey={lessonKey} close={close} />, {
-    title: lesson?.subject?.name ?? 'Пара',
+    title: lesson?.subject?.name ?? t('schedule.lesson'),
   });
 }
 
 export function openAddLesson(date: ISODate): void {
   openSheet(
     (close) => (
-      <LessonForm initial={defaultLesson()} saveLabel="Добавить на этот день" onSave={(data) => lessonOverrides.add(date, data)} close={close} />
+      <LessonForm initial={defaultLesson()} saveLabel={t('schedule.addForDay')} onSave={(data) => lessonOverrides.add(date, data)} close={close} />
     ),
-    { title: 'Разовая пара' },
+    { title: t('schedule.oneOffLesson') },
   );
 }

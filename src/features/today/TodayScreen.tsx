@@ -8,6 +8,7 @@ import { jobs } from '@/features/work/model';
 import { selectDate, selectedDate } from './selectedDate';
 import { TimelineWidget } from './TimelineWidget';
 import { useDayTimeline } from './useDayTimeline';
+import { t } from '@/core/i18n';
 
 function openDayActions(date: ISODate): void {
   openSheet(
@@ -18,7 +19,7 @@ function openDayActions(date: ISODate): void {
             key={a.id}
             icon={a.icon}
             iconColor="var(--accent)"
-            title={a.label}
+            title={t(a.label)}
             chevron
             onClick={() => {
               close();
@@ -29,7 +30,7 @@ function openDayActions(date: ISODate): void {
         ))}
       </List>
     ),
-    { title: `Добавить · ${formatRelativeDay(date).toLowerCase()}` },
+    { title: t('today.addTo', { day: formatRelativeDay(date).toLowerCase() }) },
   );
 }
 
@@ -44,11 +45,11 @@ function FreeTimeCard({ date }: { date: ISODate }) {
           <span class="num">{Math.round((free.total / awake) * 100)}%</span>
         </ProgressRing>
         <div class="today__free-stats">
-          <Stat label="Свободно" value={formatDuration(free.total)} />
+          <Stat label={t('today.free')} value={formatDuration(free.total)} />
           <div class="today__free-row">
-            <Stat label="Дома" value={formatDuration(free.atHome)} />
-            <Stat label="Вне дома" value={formatDuration(free.away)} />
-            <Stat label="Дорога" value={formatDuration(free.travel)} />
+            <Stat label={t('today.atHome')} value={formatDuration(free.atHome)} />
+            <Stat label={t('today.away')} value={formatDuration(free.away)} />
+            <Stat label={t('today.travel')} value={formatDuration(free.travel)} />
           </div>
         </div>
       </div>
@@ -66,7 +67,7 @@ export function TodayScreen() {
     <Page
       title={formatRelativeDay(date)}
       large
-      actions={<IconButton icon="settings" label="Настройки" onClick={() => navigate('settings')} />}
+      actions={<IconButton icon="settings" label={t('common.settings')} onClick={() => navigate('settings')} />}
       toolbar={<DateStrip value={date} onChange={selectDate} marks={hasOpenItems} />}
     >
       {date === today() || <p class="today__date">{formatWeekday(date, 'long')}, {formatDayMonth(date)}</p>}
@@ -75,12 +76,12 @@ export function TodayScreen() {
         <FreeTimeCard date={date} />
       </Section>
 
-      <Section title="День" action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openDayActions(date)}>Добавить</Button>}>
+      <Section title={t('today.day')} action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openDayActions(date)}>{t('common.add')}</Button>}>
         <TimelineWidget date={date} />
         {nothingSetUp && (
           <Card onClick={() => navigate('plan/setup')}>
-            <p class="today__setup-title">Настрой расписание</p>
-            <p class="today__setup-text">Пары, работа, места и дорога — и здесь появится твой день со свободными окнами.</p>
+            <p class="today__setup-title">{t('today.setupTitle')}</p>
+            <p class="today__setup-text">{t('today.setupText')}</p>
           </Card>
         )}
       </Section>

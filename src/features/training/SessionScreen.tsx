@@ -36,12 +36,14 @@ import {
   formatSet,
   formatTarget,
   sessions,
-  WELLBEING_LABELS,
+  WELLBEING,
+  wellbeingLabel,
   type Exercise,
   type SessionExercise,
   type SetLog,
   type WorkoutSession,
 } from './model';
+import { t } from '@/core/i18n';
 
 const RPE_OPTIONS = [6, 7, 7.5, 8, 8.5, 9, 9.5, 10].map((v) => ({ value: v, label: String(v) }));
 
@@ -64,22 +66,22 @@ function SetEditor({
     <Form>
       {exercise.measure !== 'time' && (
         <NumberStepper
-          label={exercise.measure === 'reps' ? 'Доп. вес' : 'Вес'}
+          label={exercise.measure === 'reps' ? t('training.extraWeight') : t('training.weight')}
           value={d.weight}
           step={exercise.step || 2.5}
           precision={2}
-          unit="кг"
+          unit={t('units.kg')}
           onChange={(weight) => setD({ ...d, weight })}
         />
       )}
       <NumberStepper
-        label={isTime ? 'Время' : 'Повторы'}
+        label={isTime ? t('training.time') : t('training.reps')}
         value={d.reps}
         step={isTime ? 5 : 1}
-        unit={isTime ? 'с' : 'повт'}
+        unit={isTime ? t('units.sec') : t('units.reps')}
         onChange={(reps) => setD({ ...d, reps })}
       />
-      <Field label="RPE (10 = отказ)">
+      <Field label={t('training.rpeLabel')}>
         <ChoiceChips allowNone options={RPE_OPTIONS} value={d.rpe} onChange={(rpe) => setD({ ...d, rpe })} />
       </Field>
       <SheetActions>
@@ -96,7 +98,7 @@ function SetEditor({
             close();
           }}
         >
-          Засчитать подход
+          {t('training.countSet')}
         </Button>
         {d.done && (
           <Button
@@ -106,7 +108,7 @@ function SetEditor({
               close();
             }}
           >
-            Снять отметку
+            {t('training.uncheck')}
           </Button>
         )}
         <Button
@@ -118,7 +120,7 @@ function SetEditor({
             close();
           }}
         >
-          Удалить подход
+          {t('training.deleteSet')}
         </Button>
       </SheetActions>
     </Form>
@@ -144,7 +146,7 @@ function ExerciseCard({ session, item }: { session: WorkoutSession; item: Sessio
           close={close}
         />
       ),
-      { title: `${exercise.name} · подход ${index + 1}` },
+      { title: t('training.setTitle', { name: exercise.name, n: index + 1 }) },
     );
   };
 
@@ -156,7 +158,7 @@ function ExerciseCard({ session, item }: { session: WorkoutSession; item: Sessio
   };
 
   const remove = async (): Promise<void> => {
-    if (await confirm({ title: `Убрать «${exercise.name}» из тренировки?`, confirmLabel: 'Убрать', danger: true })) {
+    if (await confirm({ title: t('training.removeExercise', { name: exercise.name }), confirmLabel: t('common.remove'), danger: true })) {
       updateExercises(session, (list) => list.filter((x) => x.id !== item.id));
     }
   };
@@ -168,10 +170,10 @@ function ExerciseCard({ session, item }: { session: WorkoutSession; item: Sessio
         <button type="button" class="ex-card__title" onClick={() => navigate(`health/exercise/${exercise.id}`)}>
           {exercise.name}
         </button>
-        <IconButton icon="trash" label="Убрать" onClick={() => void remove()} />
+        <IconButton icon="trash" label={t('common.remove')} onClick={() => void remove()} />
       </div>
-      {item.target && <p class="ex-card__meta">План: {formatTarget(item.target, exercise.measure)}</p>}
-      {prev && <p class="ex-card__meta">Прошлый раз: {prev.map((s) => formatSet(s, exercise.measure)).join(' · ')}</p>}
+      {item.target && <p class="ex-card__meta">{t('training.planLine', { target: formatTarget(item.target, exercise.measure) })}</p>}
+      {prev && <p class="ex-card__meta">{t('training.lastTime', { sets: prev.map((s) => formatSet(s, exercise.measure)).join(' · ') })}</p>}
       <div class="ex-card__sets">
         {item.sets.map((s, i) => (
           <div key={i} class={s.done ? 'set-row is-done' : 'set-row'}>
@@ -179,24 +181,25 @@ function ExerciseCard({ session, item }: { session: WorkoutSession; item: Sessio
             <button type="button" class="set-row__value num" onClick={() => editSet(i)}>
               {exercise.measure === 'weight' && (
                 <>
-                  <b>{formatKg(s.weight)}</b> кг × <b>{s.reps}</b>
+                  <b>{formatKg(s.weight)}</b> {t('units.kg')} × <b>{s.reps}</b>
                 </>
               )}
               {exercise.measure === 'reps' && (
                 <>
-                  <b>{s.reps}</b> повт{s.weight > 0 ? ` · +${formatKg(s.weight)} кг` : ''}
+                  <b>{s.reps}</b> {t('units.reps')}
+                  {s.weight > 0 ? ` · +${t('training.fmtKg', { n: formatKg(s.weight) })}` : ''}
                 </>
               )}
               {exercise.measure === 'time' && (
                 <>
-                  <b>{s.reps}</b> с
+                  <b>{s.reps}</b> {t('units.sec')}
                 </>
               )}
               {s.rpe !== null && <Badge>RPE {s.rpe}</Badge>}
             </button>
             <Checkbox
               checked={s.done}
-              label={`Подход ${i + 1}`}
+              label={t('training.setN', { n: i + 1 })}
               celebrate="set-done"
               {...(category ? { color: colorVar(category.color) } : {})}
               onChange={(done) => updateSet(session, item.id, i, { done })}
@@ -205,7 +208,7 @@ function ExerciseCard({ session, item }: { session: WorkoutSession; item: Sessio
         ))}
       </div>
       <button type="button" class="ex-card__add" onClick={addSet}>
-        + подход
+        {t('training.addSet')}
       </button>
     </Card>
   );
@@ -215,28 +218,28 @@ function SummaryView({ summary, close }: { summary: FinishSummary; close: () => 
   return (
     <>
       {summary.records.length > 0 && (
-        <Section title="Рекорды">
+        <Section title={t('training.records')}>
           <List>
             {summary.records.map((r) => (
-              <ListRow key={r} icon="sparkles" iconColor="var(--warning)" title={r} subtitle="Лучший расчётный максимум" />
+              <ListRow key={r} icon="sparkles" title={r} subtitle={t('training.recordHint')} />
             ))}
           </List>
         </Section>
       )}
-      <Section title="План на следующий раз">
+      <Section title={t('training.nextPlan')}>
         {summary.changes.length ? (
           <List>
             {summary.changes.map((c) => (
-              <ListRow key={c.name} icon="zap" iconColor="var(--accent-2)" title={c.name} subtitle={c.text} />
+              <ListRow key={c.name} icon="zap" title={c.name} subtitle={c.text} />
             ))}
           </List>
         ) : (
-          <p class="sheet-note">Без изменений — держим текущие веса и цели.</p>
+          <p class="sheet-note">{t('training.noChanges')}</p>
         )}
       </Section>
       <SheetActions>
         <Button variant="primary" size="lg" block onClick={close}>
-          Отлично
+          {t('common.great')}
         </Button>
       </SheetActions>
     </>
@@ -248,10 +251,10 @@ function FinishForm({ session, close }: { session: WorkoutSession; close: () => 
   const [note, setNote] = useState(session.note);
   return (
     <Form>
-      <Field label="Самочувствие">
-        <ChoiceChips options={WELLBEING_LABELS.map((label, i) => ({ value: i + 1, label }))} value={wellbeing} onChange={setWellbeing} />
+      <Field label={t('training.wellbeing')}>
+        <ChoiceChips options={WELLBEING.map((value) => ({ value, label: wellbeingLabel(value) }))} value={wellbeing} onChange={setWellbeing} />
       </Field>
-      <TextArea value={note} onValue={setNote} placeholder="Как прошло: сон, энергия, что болело…" rows={3} />
+      <TextArea value={note} onValue={setNote} placeholder={t('training.sessionNote')} rows={3} />
       <SheetActions>
         <Button
           variant="primary"
@@ -264,14 +267,14 @@ function FinishForm({ session, close }: { session: WorkoutSession; close: () => 
             haptic('success');
             close();
             if (wasFinished) {
-              toast('Сохранено', { tone: 'success' });
+              toast(t('training.saved'), { tone: 'success' });
               return;
             }
             fx(summary.records.length ? 'personal-record' : 'workout-done');
-            setTimeout(() => openSheet((c) => <SummaryView summary={summary} close={c} />, { title: 'Тренировка завершена' }), 300);
+            setTimeout(() => openSheet((c) => <SummaryView summary={summary} close={c} />, { title: t('training.finished') }), 300);
           }}
         >
-          {session.finished ? 'Сохранить' : 'Завершить'}
+          {session.finished ? t('common.save') : t('training.finish')}
         </Button>
       </SheetActions>
     </Form>
@@ -282,8 +285,8 @@ export function SessionScreen({ params }: RouteProps) {
   const session = sessions.byId(params.id);
   if (!session) {
     return (
-      <Page title="Тренировка" back>
-        <EmptyState icon="dumbbell" title="Тренировка не найдена" />
+      <Page title={t('training.workout')} back>
+        <EmptyState icon="dumbbell" title={t('training.notFound')} />
       </Page>
     );
   }
@@ -291,25 +294,27 @@ export function SessionScreen({ params }: RouteProps) {
   const done = session.exercises.reduce((n, x) => n + x.sets.filter((s) => s.done).length, 0);
 
   const remove = async (): Promise<void> => {
-    if (await confirm({ title: 'Удалить запись тренировки?', message: 'Прогрессия, уже применённая к программе, не откатывается.', confirmLabel: 'Удалить', danger: true })) {
+    if (await confirm({ title: t('training.deleteSession'), message: t('training.deleteSessionText'), confirmLabel: t('common.delete'), danger: true })) {
       sessions.remove(session.id);
       goBack();
     }
   };
 
   return (
-    <Page title={session.title} back actions={<IconButton icon="trash" label="Удалить" onClick={() => void remove()} />}>
+    <Page title={session.title} back actions={<IconButton icon="trash" label={t('common.delete')} onClick={() => void remove()} />}>
       <div class="session-head">
         <span>
-          {formatRelativeDay(session.date)} · {formatTime(session.start)}
-          {session.end !== null ? `–${formatTime(session.end)}` : ''}
+          {t('training.sessionHeader', {
+            day: formatRelativeDay(session.date),
+            time: session.end !== null ? t('time.range', { from: formatTime(session.start), to: formatTime(session.end) }) : formatTime(session.start),
+          })}
         </span>
-        {session.finished ? <Badge tone="positive">Завершена</Badge> : <Badge tone="accent">Идёт</Badge>}
+        {session.finished ? <Badge tone="positive">{t('training.finishedBadge')}</Badge> : <Badge tone="accent">{t('training.inProgress')}</Badge>}
       </div>
       <div class="session-progress">
         <ProgressBar value={done} max={Math.max(1, total)} />
         <span class="num">
-          {done}/{total} подходов
+          {t('training.setsProgress', { done, total })}
         </span>
       </div>
 
@@ -324,7 +329,7 @@ export function SessionScreen({ params }: RouteProps) {
         icon="plus"
         onClick={() => openExercisePicker((e) => updateExercises(session, (list) => [...list, freeSessionExercise(e.id)]))}
       >
-        Добавить упражнение
+        {t('training.addExercise')}
       </Button>
 
       <Section>
@@ -333,9 +338,9 @@ export function SessionScreen({ params }: RouteProps) {
           size="lg"
           block
           icon="check"
-          onClick={() => openSheet((close) => <FinishForm session={session} close={close} />, { title: session.finished ? 'Заметка' : 'Завершить тренировку' })}
+          onClick={() => openSheet((close) => <FinishForm session={session} close={close} />, { title: session.finished ? t('common.note') : t('training.finishWorkout') })}
         >
-          {session.finished ? 'Самочувствие и заметка' : 'Завершить тренировку'}
+          {session.finished ? t('training.wellbeingAndNote') : t('training.finishWorkout')}
         </Button>
       </Section>
     </Page>

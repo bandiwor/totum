@@ -1,5 +1,6 @@
 import { diffDays, startOfWeek, type ISODate } from '@/core/date';
 import type { Exercise, Measure, SetLog, WorkoutSession } from './model';
+import { t } from '@/core/i18n';
 
 /**
  * Objective strength metrics.
@@ -85,20 +86,15 @@ export function trend(points: readonly Point[]): Trend | null {
 export type ProgressStatus = 'growth' | 'stable' | 'plateau' | 'new';
 
 /** Plateau: the last 3 sessions didn't beat the best result before them. */
-export function progressStatus(series: readonly Point[], t: Trend | null): ProgressStatus {
+export function progressStatus(series: readonly Point[], tr: Trend | null): ProgressStatus {
   if (series.length < 4) return 'new';
   const before = Math.max(...series.slice(0, -3).map((p) => p.value));
   const recent = Math.max(...series.slice(-3).map((p) => p.value));
   if (recent <= before) return 'plateau';
-  return t && t.weeklyPct > 0.25 ? 'growth' : 'stable';
+  return tr && tr.weeklyPct > 0.25 ? 'growth' : 'stable';
 }
 
-export const STATUS_LABELS: Record<ProgressStatus, string> = {
-  growth: 'Рост',
-  stable: 'Стабильно',
-  plateau: 'Плато',
-  new: 'Мало данных',
-};
+export const statusLabel = (s: ProgressStatus): string => t(`training.status.${s}`);
 
 function median(values: number[]): number {
   const s = [...values].sort((a, b) => a - b);

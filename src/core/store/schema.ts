@@ -1,5 +1,6 @@
 import * as v from 'valibot';
 import { isISODate, type ISODate } from '../date';
+import { t } from '../i18n';
 
 /** Shared valibot pieces for collection schemas (validated on import). */
 export const entityFields = {
@@ -8,7 +9,7 @@ export const entityFields = {
   updatedAt: v.number(),
 };
 
-export const isoDate = v.custom<ISODate>((x) => typeof x === 'string' && isISODate(x), 'Неверная дата');
+export const isoDate = v.custom<ISODate>((x) => typeof x === 'string' && isISODate(x), () => t('backup.badDate'));
 export const minutes = v.pipe(v.number(), v.minValue(0), v.maxValue(1440));
 export const nullableString = v.nullable(v.string());
 

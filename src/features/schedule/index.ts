@@ -18,6 +18,6 @@ export const scheduleFeature: FeatureDef = {
     { pattern: 'plan/timetable/:id/day/:index', component: TimetableDayEditor },
   ],
   busySources: [{ id: 'schedule', blocksFor: lessonBlocks, cancelledFor: cancelledLessonBlocks, open: openLessonSheet }],
-  dayActions: [{ id: 'lesson', label: 'Разовая пара', icon: 'calendar', order: 10, run: openAddLesson }],
+  dayActions: [{ id: 'lesson', label: 'schedule.oneOffLesson', icon: 'calendar', order: 10, run: openAddLesson }],
   onReady: seedSchedule,
 };

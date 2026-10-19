@@ -22,12 +22,12 @@ export interface Route extends Entity {
 const entity = { id: v.string(), createdAt: v.number(), updatedAt: v.number() };
 
 export const places = defineCollection<Place>('places', {
-  label: 'Места',
+  label: 'collections.places',
   schema: v.object({ ...entity, name: v.string(), isHome: v.boolean() }),
 });
 
 export const routes = defineCollection<Route>('routes', {
-  label: 'Дорога между местами',
+  label: 'collections.routes',
   schema: v.object({
     ...entity,
     fromId: v.string(),

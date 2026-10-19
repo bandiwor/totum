@@ -4,6 +4,7 @@ import { startOfWeek, today } from '@/core/date';
 import { Switch, NumberStepper } from './inputs';
 import { DateField, Field } from './forms';
 import { List, ListRow, Section } from './primitives';
+import { t } from '@/core/i18n';
 
 /**
  * One editor for every repeating template: timetable, work shifts, training
@@ -15,7 +16,7 @@ export function CycleEditor<TDay>({
   makeDay,
   summary,
   onOpenDay,
-  title = 'Дни цикла',
+  title = t('cycle.daysTitle'),
 }: {
   cycle: Cycle<TDay>;
   onChange: (cycle: Cycle<TDay>) => void;
@@ -29,14 +30,14 @@ export function CycleEditor<TDay>({
 
   return (
     <>
-      <Section title="Повтор">
+      <Section title={t('cycle.repeat')}>
         <List>
           <ListRow
-            title="По неделям"
-            subtitle={cycle.weekAligned ? 'Дни подписаны Пн–Вс' : 'Цикл из любого числа дней'}
+            title={t('cycle.byWeeks')}
+            subtitle={cycle.weekAligned ? t('cycle.byWeeksOn') : t('cycle.byWeeksOff')}
             trailing={
               <Switch
-                label="По неделям"
+                label={t('cycle.byWeeks')}
                 checked={cycle.weekAligned}
                 onChange={(on) => {
                   const length = on ? Math.max(7, Math.round(cycle.days.length / 7) * 7) : cycle.days.length;
@@ -50,7 +51,7 @@ export function CycleEditor<TDay>({
         <div class="cycle-editor__controls">
           {cycle.weekAligned ? (
             <NumberStepper
-              label="Недель в цикле"
+              label={t('cycle.weeks')}
               value={weeks}
               min={1}
               max={8}
@@ -58,14 +59,14 @@ export function CycleEditor<TDay>({
             />
           ) : (
             <NumberStepper
-              label="Дней в цикле"
+              label={t('cycle.days')}
               value={cycle.days.length}
               min={1}
               max={60}
               onChange={(n) => onChange(resizeCycle(cycle, n, makeDay))}
             />
           )}
-          <Field label={cycle.weekAligned ? 'Неделя 1 начинается' : 'День 1 приходится на'}>
+          <Field label={cycle.weekAligned ? t('cycle.weekOneStarts') : t('cycle.dayOneIs')}>
             <DateField
               value={cycle.anchor}
               onChange={(d) => d && onChange({ ...cycle, anchor: cycle.weekAligned ? startOfWeek(d) : d })}
@@ -82,7 +83,7 @@ export function CycleEditor<TDay>({
               title={
                 <>
                   {cycleDayLabel(cycle, i)}
-                  {i === todayIndex && <span class="cycle-editor__today"> · сегодня</span>}
+                  {i === todayIndex && <span class="cycle-editor__today">{t('cycle.todayMark')}</span>}
                 </>
               }
               subtitle={summary(day, i)}

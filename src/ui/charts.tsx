@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { diffDays, type ISODate } from '@/core/date';
 import { haptic } from '@/core/haptics';
+import { t } from '@/core/i18n';
 
 /** Width of an element, kept in sync with resizes. */
 function useWidth<T extends HTMLElement>(): [preact.RefObject<T>, number] {
@@ -48,7 +49,7 @@ export function LineChart({ points, trendAt, format = (v) => v.toFixed(0), heigh
   const [active, setActive] = useState<number | null>(null);
   useEffect(() => setActive(null), [points]);
 
-  if (points.length === 0) return <div class="ui-chart ui-chart--empty">Нет данных</div>;
+  if (points.length === 0) return <div class="ui-chart ui-chart--empty">{t('common.noData')}</div>;
 
   const first = points[0]!.date;
   const last = points[points.length - 1]!.date;
@@ -144,7 +145,7 @@ export interface Bar {
 export function BarChart({ bars, format = (v) => v.toFixed(0), height = 150 }: { bars: readonly Bar[]; format?: (v: number) => string; height?: number }) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
-  if (bars.length === 0) return <div class="ui-chart ui-chart--empty">Нет данных</div>;
+  if (bars.length === 0) return <div class="ui-chart ui-chart--empty">{t('common.noData')}</div>;
 
   const max = Math.max(1, ...bars.map((b) => b.value));
   const left = 8;

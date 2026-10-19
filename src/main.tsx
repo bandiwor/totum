@@ -11,6 +11,7 @@ import { registerServiceWorker, requestPersistentStorage } from './core/pwa';
 import { registerFeatures, runReadyHooks } from './core/registry';
 import { markRoot } from './core/router';
 import { loadAll } from './core/store/store';
+import { t } from './core/i18n';
 
 async function boot(): Promise<void> {
   installNativeFeel();
@@ -30,5 +31,5 @@ async function boot(): Promise<void> {
 boot().catch((e: unknown) => {
   console.error(e);
   const root = document.getElementById('app');
-  if (root) root.textContent = `Ошибка запуска: ${e instanceof Error ? e.message : String(e)}`;
+  if (root) root.textContent = t('app.bootError', { message: e instanceof Error ? e.message : String(e) });
 });

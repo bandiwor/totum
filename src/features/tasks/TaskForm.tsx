@@ -21,6 +21,7 @@ import {
   TimeField,
 } from '@/ui';
 import { tasks, type Task } from './model';
+import { t } from '@/core/i18n';
 
 type Draft = Pick<Task, 'title' | 'note' | 'date' | 'time' | 'subjectId' | 'lesson'>;
 
@@ -57,18 +58,18 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
 
   const remove = async (): Promise<void> => {
     if (!task) return;
-    if (await confirm({ title: 'Удалить задачу?', confirmLabel: 'Удалить', danger: true })) {
+    if (await confirm({ title: t('tasks.deleteTask'), confirmLabel: t('common.delete'), danger: true })) {
       tasks.remove(task.id);
       close();
     }
   };
 
   const dateOptions = [
-    { value: 'today', label: 'Сегодня' },
-    { value: 'tomorrow', label: 'Завтра' },
-    ...(nextLesson ? [{ value: 'lesson', label: `К паре · ${formatRelativeDay(nextLesson.date).toLowerCase()}` }] : []),
-    { value: 'pick', label: 'Дата…' },
-    { value: 'none', label: 'Без даты' },
+    { value: 'today', label: t('tasks.today') },
+    { value: 'tomorrow', label: t('tasks.tomorrow') },
+    ...(nextLesson ? [{ value: 'lesson', label: t('tasks.toLesson', { day: formatRelativeDay(nextLesson.date).toLowerCase() }) }] : []),
+    { value: 'pick', label: t('tasks.pickDate') },
+    { value: 'none', label: t('tasks.noDate') },
   ];
 
   const setDateMode = (mode: string | null): void => {
@@ -91,13 +92,13 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
       <TextField
         value={d.title}
         onValue={(title) => patch({ title })}
-        placeholder="Что сделать?"
+        placeholder={t('tasks.placeholder')}
         autoFocus={!task}
         enterKeyHint="done"
         onKeyDown={(e) => e.key === 'Enter' && save()}
       />
       {activeSubjects.value.length > 0 && (
-        <Field label="Предмет (для ДЗ)">
+        <Field label={t('tasks.subjectForHw')}>
           <ChoiceChips
             allowNone
             options={activeSubjects.value.map((s) => ({ value: s.id, label: s.name, color: colorVar(s.color) }))}
@@ -106,28 +107,28 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
           />
         </Field>
       )}
-      <Field label="Когда">
+      <Field label={t('tasks.when')}>
         <ChoiceChips options={dateOptions} value={dateMode} onChange={setDateMode} />
       </Field>
       {dateMode === 'pick' && <DateField value={d.date} onChange={(date: ISODate | null) => patch({ date })} />}
       {d.date !== null && !d.lesson && (
         <List>
           <ListRow
-            title="Ко времени"
+            title={t('tasks.atTime')}
             {...(d.time !== null ? { subtitle: formatTime(d.time) } : {})}
-            trailing={<Switch label="Ко времени" checked={d.time !== null} onChange={(on) => patch({ time: on ? 18 * 60 : null })} />}
+            trailing={<Switch label={t('tasks.atTime')} checked={d.time !== null} onChange={(on) => patch({ time: on ? 18 * 60 : null })} />}
           />
         </List>
       )}
       {d.time !== null && !d.lesson && <TimeField value={d.time} onChange={(time: Minutes) => patch({ time })} />}
-      <TextArea value={d.note} onValue={(note) => patch({ note })} placeholder="Заметка" rows={3} />
+      <TextArea value={d.note} onValue={(note) => patch({ note })} placeholder={t('common.note')} rows={3} />
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!d.title.trim()} feedback={false} onClick={save}>
-          {task ? 'Сохранить' : 'Добавить'}
+          {task ? t('common.save') : t('common.add')}
         </Button>
         {task && (
           <Button variant="danger" block icon="trash" onClick={() => void remove()}>
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -136,7 +137,7 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
 }
 
 export function openTaskForm(props: Omit<TaskFormProps, 'close'> = {}): void {
-  openSheet((close) => <TaskForm {...props} close={close} />, { title: props.task ? 'Задача' : 'Новая задача' });
+  openSheet((close) => <TaskForm {...props} close={close} />, { title: props.task ? t('tasks.task') : t('tasks.newTask') });
 }
 
 /** Toggle with celebration when the day's list is finished. */

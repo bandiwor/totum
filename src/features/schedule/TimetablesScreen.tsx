@@ -23,47 +23,48 @@ import {
 } from '@/ui';
 import { defaultLesson, LessonForm } from './LessonForm';
 import { subjects, sortedTimetables, timetableFor, timetables, lessonTypes, type TemplateLesson, type Timetable } from './model';
+import { t } from '@/core/i18n';
 
 function createTimetable(): void {
   const start = startOfWeek(today());
-  const t = timetables.add({
-    name: `Семестр с ${formatDayMonth(start)}`,
+  const tt = timetables.add({
+    name: t('schedule.semesterFrom', { date: formatDayMonth(start) }),
     startDate: start,
     endDate: null,
     cycle: { anchor: start, days: Array.from({ length: 14 }, () => []), weekAligned: true },
   });
   haptic('success');
-  navigate(`plan/timetable/${t.id}`);
+  navigate(`plan/timetable/${tt.id}`);
 }
 
 export function TimetablesScreen() {
   const list = sortedTimetables.value;
   const current = timetableFor(today());
   return (
-    <Page title="Расписания" back actions={<Button size="sm" variant="ghost" icon="plus" onClick={createTimetable}>Новое</Button>}>
+    <Page title={t('schedule.timetables')} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={createTimetable}>{t('schedule.newTimetable')}</Button>}>
       {list.length === 0 ? (
         <EmptyState
           icon="calendar"
-          title="Расписания нет"
-          text="Создай расписание на семестр: цикл на 1–2 недели (или любое число дней), пары по дням."
-          action={<Button variant="primary" icon="plus" onClick={createTimetable}>Создать</Button>}
+          title={t('schedule.noTimetables')}
+          text={t('schedule.noTimetablesText')}
+          action={<Button variant="primary" icon="plus" onClick={createTimetable}>{t('schedule.create')}</Button>}
         />
       ) : (
         <Section>
           <List>
-            {list.map((t) => (
+            {list.map((tt) => (
               <ListRow
-                key={t.id}
+                key={tt.id}
                 icon="calendar"
-                title={t.name}
-                subtitle={`с ${formatDayMonth(t.startDate)}${t.endDate ? ` по ${formatDayMonth(t.endDate)}` : ''} · цикл ${t.cycle.days.length} дн.`}
-                trailing={t.id === current?.id ? <Badge tone="positive">Действует</Badge> : undefined}
+                title={tt.name}
+                subtitle={t('schedule.timetableSub', { from: formatDayMonth(tt.startDate), to: tt.endDate ? t('schedule.timetableTo', { date: formatDayMonth(tt.endDate) }) : '', days: tt.cycle.days.length })}
+                trailing={tt.id === current?.id ? <Badge tone="positive">{t('schedule.active')}</Badge> : undefined}
                 chevron
-                onClick={() => navigate(`plan/timetable/${t.id}`)}
+                onClick={() => navigate(`plan/timetable/${tt.id}`)}
               />
             ))}
           </List>
-          <p class="settings__note">Новый семестр — новое расписание с датой начала. Старое остаётся для истории.</p>
+          <p class="settings__note">{t('schedule.timetablesHint')}</p>
         </Section>
       )}
     </Page>
@@ -71,7 +72,7 @@ export function TimetablesScreen() {
 }
 
 function daySummary(day: TemplateLesson[]): string {
-  if (day.length === 0) return 'Выходной';
+  if (day.length === 0) return t('schedule.dayOff');
   return [...day]
     .sort((a, b) => a.start - b.start)
     .map((l) => subjects.get(l.subjectId)?.name ?? '?')
@@ -79,51 +80,51 @@ function daySummary(day: TemplateLesson[]): string {
 }
 
 export function TimetableEditor({ params }: RouteProps) {
-  const t = timetables.byId(params.id);
-  if (!t) return <Page title="Расписание" back><EmptyState icon="calendar" title="Не найдено" /></Page>;
+  const tt = timetables.byId(params.id);
+  if (!tt) return <Page title={t('schedule.timetable')} back><EmptyState icon="calendar" title={t('common.notFound')} /></Page>;
 
   const remove = async (): Promise<void> => {
-    if (await confirm({ title: `Удалить «${t.name}»?`, message: 'Разовые изменения пар останутся, но не будут отображаться.', confirmLabel: 'Удалить', danger: true })) {
-      timetables.remove(t.id);
+    if (await confirm({ title: t('schedule.deleteNamed', { name: tt.name }), message: t('schedule.deleteTimetableText'), confirmLabel: t('common.delete'), danger: true })) {
+      timetables.remove(tt.id);
       navigate('plan/timetables', { replace: true });
     }
   };
 
-  const rename = () => void openSheet((close) => <RenameForm t={t} close={close} />, { title: 'Расписание' });
+  const rename = () => void openSheet((close) => <RenameForm tt={tt} close={close} />, { title: t('schedule.timetable') });
 
   return (
-    <Page title={t.name} back actions={<Button size="sm" variant="ghost" icon="pencil" onClick={rename}>Изм.</Button>}>
-      <Section title="Период">
+    <Page title={tt.name} back actions={<Button size="sm" variant="ghost" icon="pencil" onClick={rename}>{t('common.edit')}</Button>}>
+      <Section title={t('schedule.period')}>
         <div class="ui-row2">
-          <Field label="Начало">
-            <DateField value={t.startDate} onChange={(d) => d && timetables.update(t.id, { startDate: d })} />
+          <Field label={t('common.start')}>
+            <DateField value={tt.startDate} onChange={(d) => d && timetables.update(tt.id, { startDate: d })} />
           </Field>
-          <Field label="Конец">
-            <DateField value={t.endDate} onChange={(d) => timetables.update(t.id, { endDate: d })} />
+          <Field label={t('common.end')}>
+            <DateField value={tt.endDate} onChange={(d) => timetables.update(tt.id, { endDate: d })} />
           </Field>
         </div>
       </Section>
       <CycleEditor
-        cycle={t.cycle}
-        onChange={(cycle) => timetables.update(t.id, { cycle })}
+        cycle={tt.cycle}
+        onChange={(cycle) => timetables.update(tt.id, { cycle })}
         makeDay={() => []}
         summary={(day) => daySummary(day)}
-        onOpenDay={(i) => navigate(`plan/timetable/${t.id}/day/${i}`)}
+        onOpenDay={(i) => navigate(`plan/timetable/${tt.id}/day/${i}`)}
       />
       <Section>
         <Button variant="danger" block icon="trash" onClick={() => void remove()}>
-          Удалить расписание
+          {t('schedule.deleteTimetable')}
         </Button>
       </Section>
     </Page>
   );
 }
 
-function RenameForm({ t, close }: { t: Timetable; close: () => void }) {
-  const [name, setName] = useState(t.name);
+function RenameForm({ tt, close }: { tt: Timetable; close: () => void }) {
+  const [name, setName] = useState(tt.name);
   return (
     <>
-      <TextField label="Название" value={name} onValue={setName} autoFocus />
+      <TextField label={t('common.name')} value={name} onValue={setName} autoFocus />
       <div class="ui-sheet__actions">
         <Button
           variant="primary"
@@ -131,27 +132,27 @@ function RenameForm({ t, close }: { t: Timetable; close: () => void }) {
           block
           disabled={!name.trim()}
           onClick={() => {
-            timetables.update(t.id, { name: name.trim() });
+            timetables.update(tt.id, { name: name.trim() });
             close();
           }}
         >
-          Сохранить
+          {t('common.save')}
         </Button>
         <Button
           block
           icon="copy"
           onClick={() => {
             const copy = timetables.add({
-              name: `${t.name} (копия)`,
-              startDate: addMonths(t.startDate, 6),
+              name: t('schedule.copySuffix', { name: tt.name }),
+              startDate: addMonths(tt.startDate, 6),
               endDate: null,
-              cycle: { ...t.cycle, days: t.cycle.days.map((d) => d.map((l) => ({ ...l, id: newId() }))) },
+              cycle: { ...tt.cycle, days: tt.cycle.days.map((d) => d.map((l) => ({ ...l, id: newId() }))) },
             });
             close();
             navigate(`plan/timetable/${copy.id}`);
           }}
         >
-          Копировать как новый семестр
+          {t('schedule.copyAsNew')}
         </Button>
       </div>
     </>
@@ -159,14 +160,14 @@ function RenameForm({ t, close }: { t: Timetable; close: () => void }) {
 }
 
 export function TimetableDayEditor({ params }: RouteProps) {
-  const t = timetables.byId(params.id);
+  const tt = timetables.byId(params.id);
   const index = Number(params.index);
-  const day = t?.cycle.days[index];
-  if (!t || !day) return <Page title="День" back><EmptyState icon="calendar" title="Не найдено" /></Page>;
+  const day = tt?.cycle.days[index];
+  if (!tt || !day) return <Page title={t('schedule.day')} back><EmptyState icon="calendar" title={t('common.notFound')} /></Page>;
 
   const setDay = (next: TemplateLesson[]): void => {
-    const days = t.cycle.days.map((d, i) => (i === index ? next : d));
-    timetables.update(t.id, { cycle: { ...t.cycle, days } });
+    const days = tt.cycle.days.map((d, i) => (i === index ? next : d));
+    timetables.update(tt.id, { cycle: { ...tt.cycle, days } });
   };
 
   const openForm = (lesson: TemplateLesson | null): void => {
@@ -181,15 +182,15 @@ export function TimetableDayEditor({ params }: RouteProps) {
           close={close}
         />
       ),
-      { title: lesson ? 'Пара' : 'Новая пара' },
+      { title: lesson ? t('schedule.lesson') : t('schedule.newLesson') },
     );
   };
 
   const sorted = [...day].sort((a, b) => a.start - b.start);
   return (
-    <Page title={cycleDayLabel(t.cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openForm(null)}>Пара</Button>}>
+    <Page title={cycleDayLabel(tt.cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openForm(null)}>{t('schedule.lesson')}</Button>}>
       {sorted.length === 0 ? (
-        <EmptyState icon="sparkles" title="Выходной" action={<Button variant="primary" icon="plus" onClick={() => openForm(null)}>Добавить пару</Button>} />
+        <EmptyState icon="sparkles" title={t('schedule.dayOff')} action={<Button variant="primary" icon="plus" onClick={() => openForm(null)}>{t('schedule.addLesson')}</Button>} />
       ) : (
         <Section>
           <List>
@@ -200,9 +201,9 @@ export function TimetableDayEditor({ params }: RouteProps) {
                 <ListRow
                   key={l.id}
                   leading={<span class="color-dot" style={{ background: colorVar(s?.color ?? 'c8') }} />}
-                  title={s?.name ?? 'Предмет удалён'}
-                  subtitle={[type?.name, l.room ?? s?.room, l.online ? 'онлайн' : null].filter(Boolean).join(' · ')}
-                  value={`${formatTime(l.start)}–${formatTime(l.end)}`}
+                  title={s?.name ?? t('schedule.deletedSubject')}
+                  subtitle={[type?.name, l.room ?? s?.room, l.online ? t('schedule.onlineLower') : null].filter(Boolean).join(' · ')}
+                  value={t('time.range', { from: formatTime(l.start), to: formatTime(l.end) })}
                   onClick={() => openForm(l)}
                 />
               );

@@ -2,6 +2,7 @@ import type { ComponentType } from 'preact';
 import type { ISODate, Minutes } from './date';
 import type { BusyBlock } from './timeline';
 import type { IconName } from '@/ui/icons';
+import type { PlainKey } from './i18n';
 
 /**
  * Every section of the app is a "feature" that plugs into shared surfaces
@@ -22,7 +23,7 @@ export interface RouteDef {
 
 export interface TabDef {
   path: string;
-  label: string;
+  label: PlainKey;
   icon: IconName;
   order: number;
 }
@@ -36,7 +37,7 @@ export interface QuickActionContext {
 /** A big tile in the "super button" menu. */
 export interface QuickAction {
   id: string;
-  label: string;
+  label: PlainKey;
   icon: IconName;
   order: number;
   /** Optional dynamic hint under the label, e.g. "1450 / 2600 ккал". */
@@ -69,7 +70,7 @@ export interface BusySource {
 /** "Add to this day" entries: one-off class, extra shift, extra workout… */
 export interface DayAction {
   id: string;
-  label: string;
+  label: PlainKey;
   icon: IconName;
   order: number;
   run: (date: ISODate) => void;

@@ -3,6 +3,7 @@ import type { ComponentChild, ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
 import { Button, cx, Icon } from './primitives';
+import { t } from '@/core/i18n';
 
 /**
  * Imperative overlays rendered by <OverlayHost/> at the app root, so they are
@@ -77,10 +78,10 @@ export function confirm(opts: {
             {opts.message && <p class="ui-dialog__message">{opts.message}</p>}
             <div class="ui-dialog__actions">
               <Button variant="secondary" onClick={() => answer(false)}>
-                {opts.cancelLabel ?? 'Отмена'}
+                {opts.cancelLabel ?? t('common.cancel')}
               </Button>
               <Button variant={opts.danger ? 'danger' : 'primary'} feedback={opts.danger ? 'warning' : 'light'} onClick={() => answer(true)}>
-                {opts.confirmLabel ?? 'Ок'}
+                {opts.confirmLabel ?? t('common.ok')}
               </Button>
             </div>
           </div>
@@ -160,7 +161,7 @@ function SheetFrame({ entry }: { entry: OverlayEntry }) {
           {entry.title && (
             <div class="ui-sheet__head" {...dragHandlers}>
               <h2>{entry.title}</h2>
-              <button type="button" class="ui-sheet__close" aria-label="Закрыть" onClick={close}>
+              <button type="button" class="ui-sheet__close" aria-label={t('common.close')} onClick={close}>
                 <Icon name="x" size={18} />
               </button>
             </div>

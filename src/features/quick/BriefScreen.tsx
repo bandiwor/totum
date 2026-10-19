@@ -4,6 +4,7 @@ import type { TimelineSegment } from '@/core/timeline';
 import { places } from '@/features/places/model';
 import { dayTimeline } from '@/features/today/useDayTimeline';
 import { EmptyState, Icon, type IconName } from '@/ui';
+import { t } from '@/core/i18n';
 
 interface BriefLine {
   key: string;
@@ -14,7 +15,7 @@ interface BriefLine {
   tone: 'busy' | 'travel' | 'free' | 'todo' | 'late';
 }
 
-const placeName = (id: string | null): string => (id ? (places.get(id)?.name ?? 'место') : '');
+const placeName = (id: string | null): string => (id ? (places.get(id)?.name ?? t('quick.somePlace')) : '');
 
 function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
   if (seg.end <= now) return null;
@@ -23,7 +24,7 @@ function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
     case 'busy':
       return {
         key,
-        time: `${formatTime(seg.start)}–${formatTime(seg.end)}`,
+        time: t('time.range', { from: formatTime(seg.start), to: formatTime(seg.end) }),
         title: seg.block.title,
         icon: 'calendar',
         tone: 'busy',
@@ -33,8 +34,8 @@ function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
       return {
         key,
         time: formatTime(seg.start),
-        title: `Выйти → ${placeName(seg.to)}`,
-        note: seg.late > 0 ? `не успеваешь на ${formatDuration(seg.late)}` : `в пути ${formatDuration(seg.end - seg.start)}`,
+        title: t('quick.leaveTo', { place: placeName(seg.to) }),
+        note: seg.late > 0 ? t('quick.lateBy', { duration: formatDuration(seg.late) }) : t('quick.onTheWay', { duration: formatDuration(seg.end - seg.start) }),
         icon: 'navigation',
         tone: seg.late > 0 ? 'late' : 'travel',
       };
@@ -44,8 +45,8 @@ function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
       return {
         key,
         time: formatTime(Math.max(seg.start, now)),
-        title: `Свободно ${formatDuration(len)}`,
-        note: seg.atHome ? 'дома' : placeName(seg.placeId),
+        title: t('today.freeFor', { duration: formatDuration(len) }),
+        note: seg.atHome ? t('quick.home') : placeName(seg.placeId),
         icon: 'sparkles',
         tone: 'free',
       };
@@ -77,7 +78,7 @@ export function BriefScreen() {
   const untimed = agenda.filter((a) => a.time === null).map(fromAgenda);
 
   if (timed.length === 0 && untimed.length === 0) {
-    return <EmptyState icon="sparkles" title="На сегодня всё" text="Ничего запланированного до конца дня." />;
+    return <EmptyState icon="sparkles" title={t('quick.allDone')} text={t('quick.allDoneText')} />;
   }
 
   return (
@@ -96,7 +97,7 @@ export function BriefScreen() {
       ))}
       {untimed.length > 0 && (
         <>
-          <p class="brief__group">Без времени</p>
+          <p class="brief__group">{t('quick.noTime')}</p>
           {untimed.map((l) => (
             <div key={l.key} class="brief__line is-todo">
               <span class="brief__time" />

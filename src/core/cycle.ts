@@ -1,4 +1,5 @@
-import { addDays, diffDays, weekday, type ISODate } from './date';
+import { addDays, diffDays, weekday, weekdayShort, type ISODate } from './date';
+import { t } from './i18n';
 
 /**
  * A repeating N-day template: class timetable (14 days), training program (7),
@@ -31,12 +32,11 @@ export function cycleDay<TDay>(cycle: Cycle<TDay>, date: ISODate): TDay {
 /** Human label for a template day: "Пн · нед. 2" for week-aligned cycles, "День 3" otherwise. */
 export function cycleDayLabel(cycle: Pick<Cycle<unknown>, 'anchor' | 'days' | 'weekAligned'>, index: number): string {
   if (cycle.weekAligned && cycle.days.length % 7 === 0) {
-    const names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-    const name = names[(weekday(cycle.anchor) + index) % 7] ?? '';
+    const name = weekdayShort((weekday(cycle.anchor) + index) % 7);
     const weeks = cycle.days.length / 7;
-    return weeks > 1 ? `${name} · нед. ${Math.floor(index / 7) + 1}` : name;
+    return weeks > 1 ? t('cycle.weekOf', { day: name, week: Math.floor(index / 7) + 1 }) : name;
   }
-  return `День ${index + 1}`;
+  return t('cycle.day', { n: index + 1 });
 }
 
 /** The next date on or after `from` that falls on template day `index`. */

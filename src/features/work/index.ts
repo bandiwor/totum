@@ -2,6 +2,7 @@ import type { FeatureDef } from '@/core/registry';
 import { colorVar } from '@/ui';
 import { shiftsFor } from './model';
 import { JobDayEditor, JobEditor, JobsScreen, openAddShift, openShiftSheet } from './screens';
+import { t } from '@/core/i18n';
 
 export const workFeature: FeatureDef = {
   id: 'work',
@@ -17,8 +18,8 @@ export const workFeature: FeatureDef = {
         shiftsFor(date).map((s) => ({
           id: s.key,
           source: 'work',
-          title: s.job?.name ?? 'Смена',
-          subtitle: s.origin === 'added' ? 'разовая смена' : 'смена',
+          title: s.job?.name ?? t('work.shift'),
+          subtitle: s.origin === 'added' ? t('work.oneOffShiftLower') : t('work.shiftLower'),
           start: s.data.start,
           end: s.data.end,
           placeId: s.job?.placeId ?? null,
@@ -27,5 +28,5 @@ export const workFeature: FeatureDef = {
       open: openShiftSheet,
     },
   ],
-  dayActions: [{ id: 'shift', label: 'Разовая смена', icon: 'briefcase', order: 20, run: openAddShift }],
+  dayActions: [{ id: 'shift', label: 'work.oneOffShift', icon: 'briefcase', order: 20, run: openAddShift }],
 };

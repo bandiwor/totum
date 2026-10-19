@@ -9,10 +9,12 @@ import {
 } from '@/core/store/backup';
 import type { StoredBackup } from '@/core/store/idb';
 import { Button, confirm, EmptyState, List, ListRow, SheetActions, TextArea, toast } from '@/ui';
+import { t } from '@/core/i18n';
+import { formatDateTime } from '@/core/date';
 
-const formatBytes = (n: number): string => (n < 1024 ? `${n} Б` : n < 1048576 ? `${(n / 1024).toFixed(1)} КБ` : `${(n / 1048576).toFixed(1)} МБ`);
-const formatStamp = (ms: number): string =>
-  new Date(ms).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const formatBytes = (n: number): string =>
+  n < 1024 ? t('units.bytes', { n }) : n < 1048576 ? t('units.kb', { n: (n / 1024).toFixed(1) }) : t('units.mb', { n: (n / 1048576).toFixed(1) });
+const formatStamp = formatDateTime;
 
 export function ExportSheet() {
   const [json] = useState(exportJSON);
@@ -20,20 +22,20 @@ export function ExportSheet() {
     try {
       await navigator.clipboard.writeText(json);
       haptic('success');
-      toast('Скопировано в буфер обмена', { tone: 'success' });
+      toast(t('settings.copied'), { tone: 'success' });
     } catch {
-      toast('Не удалось скопировать — выдели текст вручную', { tone: 'error' });
+      toast(t('settings.copyFailed'), { tone: 'error' });
     }
   };
   return (
     <>
       <p class="sheet-note">
-        Все данные одним текстом ({formatBytes(new Blob([json]).size)}). Сохрани его в Заметках или отправь себе — это твоя резервная копия.
+        {t('settings.exportText', { size: formatBytes(new Blob([json]).size) })}
       </p>
       <TextArea value={json} readOnly rows={8} class="mono" />
       <SheetActions>
         <Button variant="primary" size="lg" icon="copy" block feedback={false} onClick={copy}>
-          Скопировать
+          {t('settings.copy')}
         </Button>
       </SheetActions>
     </>
@@ -51,7 +53,7 @@ export function ImportSheet({ close }: { close: () => void }) {
       setPreview(null);
       setError(null);
     } catch {
-      toast('Нет доступа к буферу — вставь вручную', { tone: 'error' });
+      toast(t('settings.pasteFailed'), { tone: 'error' });
     }
   };
 
@@ -70,15 +72,15 @@ export function ImportSheet({ close }: { close: () => void }) {
   const apply = async (): Promise<void> => {
     if (!preview) return;
     const ok = await confirm({
-      title: 'Заменить все данные?',
-      message: 'Текущие данные будут заменены. Перед этим автоматически сохранится копия — её можно восстановить.',
-      confirmLabel: 'Заменить',
+      title: t('settings.replaceTitle'),
+      message: t('settings.replaceMessage'),
+      confirmLabel: t('settings.replace'),
       danger: true,
     });
     if (!ok) return;
     await applyImport(preview);
     haptic('success');
-    toast('Данные импортированы', { tone: 'success' });
+    toast(t('settings.imported'), { tone: 'success' });
     close();
   };
 
@@ -91,7 +93,7 @@ export function ImportSheet({ close }: { close: () => void }) {
           setPreview(null);
           setError(null);
         }}
-        placeholder="Вставь сюда экспорт…"
+        placeholder={t('settings.pastePlaceholder')}
         rows={6}
         class="mono"
         autoCapitalize="off"
@@ -101,9 +103,9 @@ export function ImportSheet({ close }: { close: () => void }) {
       {error && <p class="sheet-error">{error}</p>}
       {preview && (
         <div class="import-preview">
-          <p class="sheet-note">Экспорт от {formatStamp(Date.parse(preview.exportedAt))}:</p>
+          <p class="sheet-note">{t('settings.exportedAt', { date: formatStamp(Date.parse(preview.exportedAt)) })}</p>
           {preview.counts.length === 0 ? (
-            <p class="sheet-note">Записей нет (только настройки).</p>
+            <p class="sheet-note">{t('settings.onlySettings')}</p>
           ) : (
             <List>
               {preview.counts.map((c) => (
@@ -121,15 +123,15 @@ export function ImportSheet({ close }: { close: () => void }) {
       <SheetActions>
         {preview ? (
           <Button variant="danger" size="lg" icon="upload" block feedback={false} onClick={apply}>
-            Заменить данные
+            {t('settings.replaceData')}
           </Button>
         ) : (
           <>
             <Button variant="secondary" size="lg" icon="paste" block onClick={paste}>
-              Вставить из буфера
+              {t('settings.pasteFromClipboard')}
             </Button>
             <Button variant="primary" size="lg" block disabled={!text.trim()} feedback={false} onClick={check}>
-              Проверить
+              {t('common.check')}
             </Button>
           </>
         )}
@@ -146,24 +148,24 @@ export function BackupsSheet({ close }: { close: () => void }) {
 
   const restore = async (b: StoredBackup): Promise<void> => {
     const ok = await confirm({
-      title: 'Восстановить копию?',
-      message: `Копия от ${formatStamp(b.createdAt)}. Текущие данные тоже сохранятся копией.`,
-      confirmLabel: 'Восстановить',
+      title: t('settings.restoreTitle'),
+      message: t('settings.restoreMessage', { date: formatStamp(b.createdAt) }),
+      confirmLabel: t('settings.restore'),
       danger: true,
     });
     if (!ok) return;
     try {
-      await applyImport(parseBackup(b.json), 'Перед восстановлением');
-      toast('Копия восстановлена', { tone: 'success' });
+      await applyImport(parseBackup(b.json), t('backup.beforeRestore'));
+      toast(t('settings.restored'), { tone: 'success' });
       close();
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Ошибка восстановления', { tone: 'error' });
+      toast(e instanceof Error ? e.message : t('settings.restoreFailed'), { tone: 'error' });
     }
   };
 
   if (!items) return null;
   if (items.length === 0) {
-    return <EmptyState icon="history" title="Копий пока нет" text="Копия создаётся автоматически перед каждым импортом." />;
+    return <EmptyState icon="history" title={t('settings.noBackups')} text={t('settings.noBackupsText')} />;
   }
   return (
     <List>

@@ -34,7 +34,7 @@ export interface Job extends Entity {
 const shiftEntries = { jobId: v.string(), start: minutes, end: minutes };
 
 export const jobs = defineCollection<Job>('jobs', {
-  label: 'Работа',
+  label: 'collections.jobs',
   schema: v.object({
     ...entityFields,
     name: v.string(),
@@ -47,7 +47,7 @@ export const jobs = defineCollection<Job>('jobs', {
   }),
 });
 
-export const shiftOverrides = defineOverrides<ShiftData>('shiftOverrides', 'Изменения смен', shiftEntries);
+export const shiftOverrides = defineOverrides<ShiftData>('shiftOverrides', 'collections.shiftOverrides', shiftEntries);
 
 export const activeJobs = computed(() => jobs.all.value.filter((j) => !j.archived));
 
@@ -70,4 +70,4 @@ export function shiftsFor(date: ISODate): Shift[] {
     .sort((a, b) => a.data.start - b.data.start);
 }
 
-export const PAY_LABELS: Record<PayType, string> = { hour: 'в час', shift: 'за смену', month: 'в месяц' };
+export const PAY_TYPES: readonly PayType[] = ['hour', 'shift', 'month'];

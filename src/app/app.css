@@ -28,9 +28,9 @@
   grid-auto-columns: 1fr;
   height: calc(var(--tabbar-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  -webkit-backdrop-filter: blur(24px) saturate(1.4);
-  backdrop-filter: blur(24px) saturate(1.4);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
 }
 .ui-tab {
@@ -66,7 +66,6 @@
   border-radius: 50%;
   background: var(--accent);
   color: var(--accent-contrast);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 40%, transparent), var(--shadow-lg);
 }
 
 .quick {
@@ -81,9 +80,7 @@
 .quick__backdrop {
   position: absolute;
   inset: 0;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  -webkit-backdrop-filter: blur(28px);
-  backdrop-filter: blur(28px);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
   animation: quick-fade var(--dur-base) var(--ease-out) both;
 }
 .quick.is-exit .quick__backdrop {
@@ -114,8 +111,8 @@
   border: 1px solid var(--border);
   text-align: left;
   /* Staggered entrance; --i is the tile index. */
-  animation: quick-tile var(--dur-slow) var(--ease-spring) both;
-  animation-delay: calc(var(--i) * 25ms);
+  animation: quick-tile var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--i) * 15ms);
 }
 .quick.is-exit .ui-tile {
   animation: quick-fade var(--dur-fast) linear reverse both;
@@ -123,12 +120,6 @@
 .ui-tile--wide {
   grid-column: span 2;
   min-height: 96px;
-  background: var(--accent-soft);
-  border-color: transparent;
-}
-.ui-tile--wide .ui-tile__icon {
-  background: var(--accent);
-  color: var(--accent-contrast);
 }
 .ui-tile__icon {
   display: grid;
@@ -159,7 +150,6 @@
   border-radius: 50%;
   background: var(--surface-3);
   color: var(--text);
-  animation: quick-spin var(--dur-slow) var(--ease-spring) both;
 }
 .quick__screen {
   display: flex;
@@ -169,7 +159,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   overflow: hidden;
-  animation: quick-tile var(--dur-slow) var(--ease-spring) both;
+  animation: quick-tile var(--dur-slow) var(--ease-out) both;
 }
 .quick__screen-head {
   display: flex;
@@ -198,12 +188,8 @@
   to { opacity: 1; }
 }
 @keyframes quick-tile {
-  from { opacity: 0; transform: translateY(24px) scale(0.94); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
-}
-@keyframes quick-spin {
-  from { transform: rotate(-90deg) scale(0.6); opacity: 0; }
-  to { transform: none; opacity: 1; }
 }
 
 /* ── Brief ("Что сейчас") ── */
@@ -255,11 +241,9 @@
 .brief__line.is-late .brief__note { color: var(--danger); }
 .brief__group {
   margin-top: var(--space-3);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   font-weight: 600;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: var(--text-2);
 }
 
 /* ── Update banner ── */
@@ -277,10 +261,10 @@
   padding: 0 var(--space-2) 0 var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--surface-3);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-float);
   font-size: var(--fs-sm);
   font-weight: 600;
-  animation: ui-toast-in var(--dur-slow) var(--ease-spring);
+  animation: ui-toast-in var(--dur-slow) var(--ease-out);
 }
 .update-banner button {
   min-height: var(--tap);
@@ -426,8 +410,8 @@
   gap: 2px;
   padding: 10px var(--space-3) 10px calc(var(--space-3) + 6px);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--block-color) 14%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--block-color) 22%, transparent);
+  background: var(--surface);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 .tl-block__card::before {
@@ -464,7 +448,7 @@
   opacity: 0.45;
 }
 .tl-block.is-current .tl-block__card {
-  box-shadow: 0 0 0 2px var(--block-color);
+  border-color: var(--block-color);
 }
 .tl-block.is-cancelled {
   opacity: 0.5;
@@ -492,12 +476,7 @@
   color: var(--danger);
 }
 .tl-free {
-  margin-left: calc(44px + var(--space-3));
-  padding: 6px var(--space-3);
-  border: 1px dashed color-mix(in srgb, var(--accent-2) 45%, transparent);
-  border-radius: var(--radius-md);
   color: var(--accent-2);
-  background: var(--accent-2-soft);
 }
 .tl-free .num {
   font-weight: 600;
@@ -704,15 +683,12 @@
 }
 .training__active {
   margin-bottom: var(--space-4);
-  background: var(--accent-soft) !important;
-  border-color: transparent !important;
+  border-color: var(--accent);
 }
 .training__active-label {
-  font-size: var(--fs-xs);
-  font-weight: 700;
+  font-size: var(--fs-sm);
+  font-weight: 600;
   color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 .training__active-title {
   font-size: var(--fs-lg);
@@ -817,4 +793,9 @@
 }
 .stat-grid + .ui-section {
   margin-top: var(--space-6);
+}
+.bells-breaks {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-3);
 }

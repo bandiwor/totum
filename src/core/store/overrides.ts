@@ -1,6 +1,7 @@
 import * as v from 'valibot';
 import { computed } from '@preact/signals';
 import type { ISODate } from '../date';
+import type { PlainKey } from '../i18n';
 import { newId } from '../id';
 import type { DayOverride } from '../plan';
 import { entityFields, isoDate } from './schema';
@@ -93,7 +94,7 @@ export class OverrideStore<T extends object> {
 
 export function defineOverrides<T extends object>(
   name: string,
-  label: string,
+  label: PlainKey,
   dataEntries: v.ObjectEntries,
 ): OverrideStore<T> {
   const data = v.object(dataEntries);

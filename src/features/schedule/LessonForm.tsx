@@ -4,6 +4,7 @@ import { haptic } from '@/core/haptics';
 import { navigate } from '@/core/router';
 import { Button, ChoiceChips, colorVar, EmptyState, Field, Form, List, ListRow, SheetActions, Switch, TextField, TimeRange } from '@/ui';
 import { activeSubjects, bells, sortedLessonTypes, subjects, type LessonData } from './model';
+import { t } from '@/core/i18n';
 
 export function defaultLesson(): LessonData {
   const first = bells.value.value.slots[0];
@@ -24,7 +25,7 @@ export function LessonForm({
   initial,
   onSave,
   onDelete,
-  saveLabel = 'Сохранить',
+  saveLabel = t('common.save'),
   close,
 }: {
   initial: LessonData;
@@ -43,7 +44,7 @@ export function LessonForm({
     return (
       <EmptyState
         icon="notes"
-        title="Сначала добавь предметы"
+        title={t('schedule.addSubjectsFirst')}
         action={
           <Button
             variant="primary"
@@ -52,7 +53,7 @@ export function LessonForm({
               navigate('plan/subjects');
             }}
           >
-            К предметам
+            {t('schedule.toSubjects')}
           </Button>
         }
       />
@@ -61,10 +62,10 @@ export function LessonForm({
 
   return (
     <Form>
-      <Field label="Предмет">
+      <Field label={t('schedule.subject')}>
         <ChoiceChips options={subjectOptions} value={d.subjectId} onChange={(id) => id && patch({ subjectId: id })} />
       </Field>
-      <Field label="Тип">
+      <Field label={t('schedule.type')}>
         <ChoiceChips
           options={sortedLessonTypes.value.map((t) => ({ value: t.id, label: t.name, color: colorVar(t.color) }))}
           value={d.typeId}
@@ -73,9 +74,9 @@ export function LessonForm({
         />
       </Field>
       {slots.length > 0 && (
-        <Field label="Пара">
+        <Field label={t('schedule.pairNumber')}>
           <ChoiceChips
-            options={[...slots.map((s) => ({ value: s.n, label: `${s.n} · ${formatTime(s.start)}` })), { value: 0, label: 'Своё время' }]}
+            options={[...slots.map((s) => ({ value: s.n, label: t('schedule.bellOption', { n: s.n, time: formatTime(s.start) }) })), { value: 0, label: t('schedule.customTime') }]}
             value={d.bell ?? 0}
             onChange={(n) => {
               const slot = slots.find((s) => s.n === n);
@@ -86,13 +87,13 @@ export function LessonForm({
       )}
       {(slots.length === 0 || d.bell === null) && <TimeRange start={d.start} end={d.end} onChange={(start, end) => patch({ start, end })} />}
       <TextField
-        label="Аудитория"
+        label={t('schedule.room')}
         value={d.room ?? ''}
-        placeholder={subject?.room ? `${subject.room} (как у предмета)` : 'Не указана'}
+        placeholder={subject?.room ? t('schedule.roomInherited', { room: subject.room }) : t('schedule.roomNone')}
         onValue={(room) => patch({ room: room.trim() ? room : null })}
       />
       <List>
-        <ListRow title="Онлайн" subtitle="Без дороги" trailing={<Switch label="Онлайн" checked={d.online} onChange={(online) => patch({ online })} />} />
+        <ListRow title={t('schedule.online')} subtitle={t('schedule.noTravel')} trailing={<Switch label={t('schedule.online')} checked={d.online} onChange={(online) => patch({ online })} />} />
       </List>
       <SheetActions>
         <Button
@@ -119,7 +120,7 @@ export function LessonForm({
               close();
             }}
           >
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>

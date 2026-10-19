@@ -3,6 +3,7 @@ import { subjects } from '@/features/schedule/model';
 import { Badge, Checkbox, colorVar, ListRow } from '@/ui';
 import { openTaskForm, toggleTask } from './TaskForm';
 import type { Task } from './model';
+import { t } from '@/core/i18n';
 
 export function TaskRow({ task, showDate = false }: { task: Task; showDate?: boolean }) {
   const subject = task.subjectId ? subjects.get(task.subjectId) : undefined;
@@ -10,7 +11,7 @@ export function TaskRow({ task, showDate = false }: { task: Task; showDate?: boo
   const meta = [
     showDate && task.date ? formatRelativeDay(task.date) : null,
     task.time !== null ? formatTime(task.time) : null,
-    task.lesson ? 'к паре' : null,
+    task.lesson ? t('tasks.toLessonShort') : null,
     task.note || null,
   ]
     .filter(Boolean)

@@ -14,6 +14,7 @@ import {
   type WorkoutTemplate,
 } from './model';
 import { nextTarget } from './progression';
+import { t } from '@/core/i18n';
 
 function setsFromTarget(t: Target): SetLog[] {
   return Array.from({ length: t.sets }, () => ({ weight: t.weight, reps: t.repGoal, rpe: null, done: false }));
@@ -54,7 +55,7 @@ export function startSession(opts: {
     date,
     slotKey: opts.slotKey ?? null,
     templateId: opts.template?.id ?? null,
-    title: opts.title ?? opts.template?.name ?? 'Тренировка',
+    title: opts.title ?? opts.template?.name ?? t('training.workout'),
     start: opts.start ?? nowMinutes(),
     end: opts.end ?? null,
     finished: false,
@@ -83,8 +84,8 @@ export interface FinishSummary {
 }
 
 function describeChange(from: Target, to: Target, unit: string): string | null {
-  if (to.weight > from.weight) return `${formatKg(from.weight)} → ${formatKg(to.weight)} кг`;
-  if (to.repGoal > from.repGoal) return `цель ${from.repGoal} → ${to.repGoal}${unit}`;
+  if (to.weight > from.weight) return t('training.changeWeight', { from: formatKg(from.weight), to: formatKg(to.weight) });
+  if (to.repGoal > from.repGoal) return t('training.changeGoal', { from: from.repGoal, to: to.repGoal, unit });
   return null;
 }
 
@@ -100,7 +101,7 @@ export function finishSession(session: WorkoutSession, wellbeing: number | null,
       const { id, exerciseId, ...current } = planned;
       const { target, change } = nextTarget(current, logged.sets, exercise.measure);
       if (change === 'weight' || change === 'reps') {
-        const text = describeChange(current, target, exercise.measure === 'time' ? ' с' : '');
+        const text = describeChange(current, target, exercise.measure === 'time' ? ` ${t('units.sec')}` : '');
         if (text) summary.changes.push({ name: exercise.name, text });
       }
       return { ...target, id, exerciseId };

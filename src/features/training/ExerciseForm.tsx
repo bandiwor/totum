@@ -17,7 +17,8 @@ import {
   TextArea,
   TextField,
 } from '@/ui';
-import { activeExercises, categories, exercises, MEASURE_LABELS, sessions, sortedCategories, templates, type Exercise, type Measure } from './model';
+import { activeExercises, categories, exercises, MEASURES, measureLabel, sessions, sortedCategories, templates, type Exercise, type Measure } from './model';
+import { t } from '@/core/i18n';
 
 export function ExerciseForm({
   exercise,
@@ -52,8 +53,8 @@ export function ExerciseForm({
 
   return (
     <Form>
-      <TextField label="Название" value={name} onValue={setName} placeholder="Жим лёжа" autoFocus={!exercise} />
-      <Field label="Категория">
+      <TextField label={t('common.name')} value={name} onValue={setName} placeholder={t('training.exercisePlaceholder')} autoFocus={!exercise} />
+      <Field label={t('training.category')}>
         <ChoiceChips
           allowNone
           options={sortedCategories.value.map((c) => ({ value: c.id, label: c.name, color: colorVar(c.color) }))}
@@ -61,9 +62,9 @@ export function ExerciseForm({
           onChange={setCategoryId}
         />
       </Field>
-      <Field label="Как считать">
+      <Field label={t('training.measureLabel')}>
         <ChoiceChips
-          options={(Object.keys(MEASURE_LABELS) as Measure[]).map((m) => ({ value: m, label: MEASURE_LABELS[m] }))}
+          options={MEASURES.map((m) => ({ value: m, label: measureLabel(m) }))}
           value={measure}
           onChange={(m) => {
             if (!m) return;
@@ -74,24 +75,24 @@ export function ExerciseForm({
       </Field>
       {measure !== 'reps' && (
         <NumberStepper
-          label={measure === 'time' ? 'Шаг прогрессии' : 'Шаг веса'}
+          label={measure === 'time' ? t('training.progressionStep') : t('training.weightStep')}
           value={step}
           step={measure === 'time' ? 5 : 0.5}
           min={measure === 'time' ? 1 : 0.5}
           precision={measure === 'time' ? 0 : 2}
-          unit={measure === 'time' ? 'с' : 'кг'}
+          unit={measure === 'time' ? t('units.sec') : t('units.kg')}
           onChange={setStep}
         />
       )}
-      <TextArea value={note} onValue={setNote} placeholder="Заметка: техника, настройки тренажёра…" rows={2} />
+      <TextArea value={note} onValue={setNote} placeholder={t('training.exerciseNote')} rows={2} />
       {exercise && (
         <List>
-          <ListRow title="В архиве" subtitle="Скрыто из выбора, история сохраняется" trailing={<Switch label="Архив" checked={archived} onChange={setArchived} />} />
+          <ListRow title={t('common.archived')} subtitle={t('training.archivedHint')} trailing={<Switch label={t('common.archive')} checked={archived} onChange={setArchived} />} />
         </List>
       )}
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!name.trim()} feedback={false} onClick={save}>
-          Сохранить
+          {t('common.save')}
         </Button>
         {exercise && !used && (
           <Button
@@ -99,13 +100,13 @@ export function ExerciseForm({
             block
             icon="trash"
             onClick={async () => {
-              if (await confirm({ title: `Удалить «${exercise.name}»?`, confirmLabel: 'Удалить', danger: true })) {
+              if (await confirm({ title: t('schedule.deleteNamed', { name: exercise.name }), confirmLabel: t('common.delete'), danger: true })) {
                 exercises.remove(exercise.id);
                 close();
               }
             }}
           >
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -115,7 +116,7 @@ export function ExerciseForm({
 
 export function openExerciseForm(exercise: Exercise | null, onCreated?: (e: Exercise) => void, initialName = ''): void {
   openSheet((close) => <ExerciseForm exercise={exercise} close={close} initialName={initialName} {...(onCreated ? { onCreated } : {})} />, {
-    title: exercise ? exercise.name : 'Новое упражнение',
+    title: exercise ? exercise.name : t('training.newExercise'),
   });
 }
 
@@ -133,7 +134,7 @@ export function ExercisePicker({ onPick, close }: { onPick: (e: Exercise) => voi
 
   return (
     <div class="picker">
-      <TextField value={query} onValue={setQuery} placeholder="Поиск" type="search" />
+      <TextField value={query} onValue={setQuery} placeholder={t('training.search')} type="search" />
       <ChoiceChips
         allowNone
         options={sortedCategories.value.map((c) => ({ value: c.id, label: c.name, color: colorVar(c.color) }))}
@@ -141,7 +142,7 @@ export function ExercisePicker({ onPick, close }: { onPick: (e: Exercise) => voi
         onChange={setCat}
       />
       {list.length === 0 ? (
-        <EmptyState icon="dumbbell" title={q ? 'Не найдено' : 'Упражнений нет'} />
+        <EmptyState icon="dumbbell" title={q ? t('common.notFound') : t('training.noExercises')} />
       ) : (
         <List>
           {list.map((e) => (
@@ -149,7 +150,7 @@ export function ExercisePicker({ onPick, close }: { onPick: (e: Exercise) => voi
               key={e.id}
               leading={<span class="color-dot" style={{ background: colorVar(categories.get(e.categoryId ?? '')?.color ?? 'c8') }} />}
               title={e.name}
-              subtitle={MEASURE_LABELS[e.measure]}
+              subtitle={measureLabel(e.measure)}
               onClick={() => pick(e)}
             />
           ))}
@@ -169,12 +170,12 @@ export function ExercisePicker({ onPick, close }: { onPick: (e: Exercise) => voi
           )
         }
       >
-        {query.trim() ? `Создать «${query.trim()}»` : 'Новое упражнение'}
+        {query.trim() ? t('training.createNamed', { name: query.trim() }) : t('training.newExercise')}
       </Button>
     </div>
   );
 }
 
 export function openExercisePicker(onPick: (e: Exercise) => void): void {
-  openSheet((close) => <ExercisePicker onPick={onPick} close={close} />, { title: 'Упражнение', fullscreen: true });
+  openSheet((close) => <ExercisePicker onPick={onPick} close={close} />, { title: t('training.exercise'), fullscreen: true });
 }

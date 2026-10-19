@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import type { DataSnapshot } from './store';
 
 /**
@@ -14,12 +15,12 @@ const migrations: Migration[] = [];
 
 export function migrate(data: DataSnapshot, fromVersion: number): DataSnapshot {
   if (fromVersion > SCHEMA_VERSION) {
-    throw new Error(`Данные из более новой версии приложения (схема ${fromVersion}). Сначала обнови приложение.`);
+    throw new Error(t('backup.newerSchema', { version: fromVersion }));
   }
   let out = data;
   for (let v = fromVersion; v < SCHEMA_VERSION; v++) {
     const step = migrations[v - 1];
-    if (!step) throw new Error(`Нет миграции ${v} → ${v + 1}`);
+    if (!step) throw new Error(t('backup.noMigration', { from: v, to: v + 1 }));
     out = step(out);
   }
   return out;

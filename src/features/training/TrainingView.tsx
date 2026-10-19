@@ -4,11 +4,12 @@ import { navigate } from '@/core/router';
 import { Badge, Button, Card, colorVar, EmptyState, List, ListRow, openSheet, Page, Section } from '@/ui';
 import { startSession } from './actions';
 import { openAddWorkout, openWorkoutSlot } from './ProgramScreens';
-import { activeSession, plannedWorkouts, sessionForSlot, sessionsByDate, templates, WELLBEING_LABELS, type WorkoutSession } from './model';
+import { activeSession, plannedWorkouts, sessionForSlot, sessionsByDate, templates, wellbeingLabel, type WorkoutSession } from './model';
+import { t } from '@/core/i18n';
 
 function sessionSubtitle(s: WorkoutSession): string {
   const sets = s.exercises.reduce((n, x) => n + x.sets.filter((set) => set.done).length, 0);
-  return [`${formatDayMonth(s.date)}`, `${sets} подх.`, s.wellbeing ? WELLBEING_LABELS[s.wellbeing - 1] : null].filter(Boolean).join(' · ');
+  return [formatDayMonth(s.date), t('training.sessionSub', { sets }), s.wellbeing ? wellbeingLabel(s.wellbeing) : null].filter(Boolean).join(' · ');
 }
 
 /** Pick a template (or none) and start right now. */
@@ -21,16 +22,16 @@ export function StartNowList({ close }: { close: () => void }) {
   };
   return (
     <List>
-      {templates.all.value.map((t) => (
-        <ListRow key={t.id} leading={<span class="color-dot" style={{ background: colorVar(t.color) }} />} title={t.name} subtitle={`${t.exercises.length} упр.`} chevron onClick={() => go(t.id)} />
+      {templates.all.value.map((tpl) => (
+        <ListRow key={tpl.id} leading={<span class="color-dot" style={{ background: colorVar(tpl.color) }} />} title={tpl.name} subtitle={t('training.exercisesCount', { n: tpl.exercises.length })} chevron onClick={() => go(tpl.id)} />
       ))}
-      <ListRow icon="plus" title="Свободная тренировка" subtitle="Упражнения добавишь по ходу" chevron onClick={() => go(null)} />
+      <ListRow icon="plus" title={t('training.freeWorkout')} subtitle={t('training.freeWorkoutHint')} chevron onClick={() => go(null)} />
     </List>
   );
 }
 
 export function openStartNow(): void {
-  void openSheet((close) => <StartNowList close={close} />, { title: 'Начать сейчас' });
+  void openSheet((close) => <StartNowList close={close} />, { title: t('training.startNow') });
 }
 
 export function TodayWorkouts() {
@@ -39,13 +40,13 @@ export function TodayWorkouts() {
   if (planned.length === 0) {
     return (
       <Card>
-        <p class="training__rest">Сегодня по программе отдых</p>
+        <p class="training__rest">{t('training.restToday')}</p>
         <div class="training__actions">
           <Button size="sm" variant="primary" icon="dumbbell" onClick={openStartNow}>
-            Начать сейчас
+            {t('training.startNow')}
           </Button>
           <Button size="sm" icon="calendar" onClick={() => openAddWorkout(date)}>
-            Запланировать
+            {t('training.schedule')}
           </Button>
         </div>
       </Card>
@@ -59,9 +60,9 @@ export function TodayWorkouts() {
           <ListRow
             key={p.key}
             leading={<span class="color-dot" style={{ background: colorVar(p.template?.color ?? 'c8') }} />}
-            title={p.template?.name ?? 'Тренировка'}
-            subtitle={`${formatTime(p.data.start)}–${formatTime(p.data.end)}`}
-            trailing={s ? <Badge tone={s.finished ? 'positive' : 'accent'}>{s.finished ? 'Готово' : 'Идёт'}</Badge> : <Badge>Начать</Badge>}
+            title={p.template?.name ?? t('training.workout')}
+            subtitle={t('time.range', { from: formatTime(p.data.start), to: formatTime(p.data.end) })}
+            trailing={s ? <Badge tone={s.finished ? 'positive' : 'accent'}>{s.finished ? t('training.done') : t('training.inProgress')}</Badge> : <Badge>{t('training.start')}</Badge>}
             chevron
             onClick={() => openWorkoutSlot(date, p.key)}
           />
@@ -78,24 +79,24 @@ export function TrainingView() {
     <>
       {active && (
         <Card onClick={() => navigate(`health/session/${active.id}`)} class="training__active">
-          <p class="training__active-label">Идёт тренировка</p>
+          <p class="training__active-label">{t('training.active')}</p>
           <p class="training__active-title">{active.title}</p>
         </Card>
       )}
-      <Section title="Сегодня">
+      <Section title={t('training.today')}>
         <TodayWorkouts />
       </Section>
       <Section>
         <List>
-          <ListRow icon="calendar" iconColor="var(--c-1)" title="Программа" subtitle="Какие тренировки в какие дни" chevron onClick={() => navigate('health/program')} />
-          <ListRow icon="dumbbell" iconColor="var(--c-2)" title="Тренировки" subtitle="Упражнения, подходы, веса, прогрессия" chevron onClick={() => navigate('health/templates')} />
-          <ListRow icon="tasks" iconColor="var(--c-5)" title="Упражнения" subtitle="Библиотека и категории" chevron onClick={() => navigate('health/exercises')} />
-          <ListRow icon="scale" iconColor="var(--c-3)" title="Прогресс" subtitle="Графики и тренды" chevron onClick={() => navigate('health/progress')} />
+          <ListRow icon="calendar" title={t('training.program')} subtitle={t('training.programSub')} chevron onClick={() => navigate('health/program')} />
+          <ListRow icon="dumbbell" title={t('training.workouts')} subtitle={t('training.workoutsSub')} chevron onClick={() => navigate('health/templates')} />
+          <ListRow icon="tasks" title={t('training.exercises')} subtitle={t('training.exercisesSub')} chevron onClick={() => navigate('health/exercises')} />
+          <ListRow icon="scale" title={t('training.progress')} subtitle={t('training.progressSub')} chevron onClick={() => navigate('health/progress')} />
         </List>
       </Section>
-      <Section title="Последние" action={recent.length ? <Button size="sm" variant="ghost" onClick={() => navigate('health/history')}>Все</Button> : undefined}>
+      <Section title={t('training.recent')} action={recent.length ? <Button size="sm" variant="ghost" onClick={() => navigate('health/history')}>{t('common.all')}</Button> : undefined}>
         {recent.length === 0 ? (
-          <p class="widget-empty">Журнал пуст.</p>
+          <p class="widget-empty">{t('training.emptyLog')}</p>
         ) : (
           <List>
             {recent.map((s) => (
@@ -111,9 +112,9 @@ export function TrainingView() {
 export function HistoryScreen() {
   const list = sessionsByDate.value;
   return (
-    <Page title="Журнал" back>
+    <Page title={t('training.log')} back>
       {list.length === 0 ? (
-        <EmptyState icon="dumbbell" title="Тренировок ещё не было" />
+        <EmptyState icon="dumbbell" title={t('training.noSessions')} />
       ) : (
         <Section>
           <List>
@@ -123,7 +124,7 @@ export function HistoryScreen() {
                 icon="dumbbell"
                 title={s.title}
                 subtitle={sessionSubtitle(s)}
-                trailing={s.finished ? undefined : <Badge tone="accent">Идёт</Badge>}
+                trailing={s.finished ? undefined : <Badge tone="accent">{t('training.inProgress')}</Badge>}
                 chevron
                 onClick={() => navigate(`health/session/${s.id}`)}
               />

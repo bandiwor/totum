@@ -123,11 +123,9 @@
   padding: 0 var(--space-1);
 }
 .ui-section__title {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .ui-list {
@@ -317,7 +315,8 @@
   background: var(--check-color);
   border-color: var(--check-color);
   color: var(--accent-contrast);
-  animation: ui-pop var(--dur-slow) var(--ease-spring);
+  /* Reward hook: replaced by real effects later (see core/fx.ts). */
+  animation: ui-pop var(--dur-base) var(--ease-out);
 }
 
 /* ── Text field ── */
@@ -562,7 +561,7 @@
   padding-bottom: var(--safe-bottom);
   transform: translateY(100%);
   transition: transform var(--dur-slow) var(--ease-out);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-float);
 }
 .ui-overlay--fullscreen .ui-sheet {
   height: calc(100% - var(--safe-top) - 12px);
@@ -626,10 +625,10 @@
   padding: var(--space-5);
   border-radius: var(--radius-xl);
   background: var(--surface);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-float);
   transform: scale(0.92);
   opacity: 0;
-  transition: transform var(--dur-base) var(--ease-spring), opacity var(--dur-base);
+  transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base);
 }
 .ui-overlay.is-open .ui-dialog {
   transform: scale(1);
@@ -674,11 +673,11 @@
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-lg);
   background: var(--surface-3);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-float);
   font-size: var(--fs-sm);
   font-weight: 500;
   pointer-events: auto;
-  animation: ui-toast-in var(--dur-slow) var(--ease-spring);
+  animation: ui-toast-in var(--dur-slow) var(--ease-out);
 }
 .ui-toast--success { color: var(--accent-2); }
 .ui-toast--error { color: var(--danger); }
@@ -698,9 +697,8 @@
 
 /* ── Keyframes (effect hooks reuse these) ── */
 @keyframes ui-pop {
-  0% { transform: scale(0.8); }
-  60% { transform: scale(1.12); }
-  100% { transform: scale(1); }
+  from { transform: scale(0.85); }
+  to { transform: scale(1); }
 }
 @keyframes ui-toast-in {
   from { transform: translateY(-16px); opacity: 0; }
@@ -738,7 +736,6 @@
     height: 27px;
     border-radius: 50%;
     background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     transition: transform var(--dur-base) var(--ease-out);
   }
   .ui-switch:checked {
@@ -975,7 +972,6 @@
   padding: 4px 10px;
   border-radius: var(--radius-sm);
   background: var(--surface-3);
-  box-shadow: var(--shadow-lg);
   pointer-events: none;
   font-size: var(--fs-xs);
   color: var(--text-2);

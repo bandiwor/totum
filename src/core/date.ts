@@ -2,6 +2,7 @@
 // since midnight. No Date objects in the data model → no time-zone drift.
 
 declare const isoDateBrand: unique symbol;
+import { intlLocale, t } from './i18n';
 export type ISODate = string & { readonly [isoDateBrand]: true };
 /** Minutes since local midnight, 0..1440. */
 export type Minutes = number;
@@ -106,30 +107,51 @@ export function formatDuration(min: Minutes): string {
   const total = Math.max(0, Math.round(min));
   const h = Math.floor(total / 60);
   const m = total % 60;
-  if (h && m) return `${h} ч ${m} мин`;
-  if (h) return `${h} ч`;
-  return `${m} мин`;
+  if (h && m) return t('time.hm', { h, m });
+  if (h) return t('time.h', { h });
+  return t('time.m', { m });
 }
 
 // ── Formatting (ru) ──────────────────────────────────────────────────────────
 
-const fmtDayMonth = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
-const fmtWeekdayShort = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' });
-const fmtWeekdayLong = new Intl.DateTimeFormat('ru-RU', { weekday: 'long' });
+const formatters = new Map<string, Intl.DateTimeFormat>();
+function fmt(options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  const key = `${intlLocale()}|${JSON.stringify(options)}`;
+  let f = formatters.get(key);
+  if (!f) formatters.set(key, (f = new Intl.DateTimeFormat(intlLocale(), options)));
+  return f;
+}
+
+const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function formatDayMonth(date: ISODate): string {
-  return fmtDayMonth.format(toJSDate(date));
+  return fmt({ day: 'numeric', month: 'long' }).format(toJSDate(date));
 }
 
 export function formatWeekday(date: ISODate, style: 'short' | 'long' = 'short'): string {
-  return (style === 'short' ? fmtWeekdayShort : fmtWeekdayLong).format(toJSDate(date));
+  return fmt({ weekday: style }).format(toJSDate(date));
+}
+
+/** "Пн".."Вс" for 0 = Monday … 6 = Sunday. */
+export function weekdayShort(index: number): string {
+  // 2024-01-01 was a Monday.
+  return capitalize(fmt({ weekday: 'short' }).format(new Date(2024, 0, 1 + index)));
+}
+
+/** Standalone month name: «Октябрь». */
+export function formatMonth(date: ISODate): string {
+  return capitalize(fmt({ month: 'long' }).format(toJSDate(date)));
+}
+
+export function formatDateTime(ms: number): string {
+  return fmt({ day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
 }
 
 /** "Сегодня", "Завтра", "Вчера" or "пятница, 24 октября". */
 export function formatRelativeDay(date: ISODate, base: ISODate = today()): string {
   const diff = diffDays(base, date);
-  if (diff === 0) return 'Сегодня';
-  if (diff === 1) return 'Завтра';
-  if (diff === -1) return 'Вчера';
-  return `${formatWeekday(date, 'long')}, ${formatDayMonth(date)}`;
+  if (diff === 0) return t('time.today');
+  if (diff === 1) return t('time.tomorrow');
+  if (diff === -1) return t('time.yesterday');
+  return t('time.weekdayDate', { weekday: formatWeekday(date, 'long'), date: formatDayMonth(date) });
 }

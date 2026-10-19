@@ -4,6 +4,7 @@ import { formatTime, isISODate, parseTime, type ISODate, type Minutes } from '@/
 import { haptic } from '@/core/haptics';
 import { Chip } from './inputs';
 import { cx } from './primitives';
+import { t } from '@/core/i18n';
 
 // ── Palette ────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ export function ColorPicker({ value, onChange }: { value: string; onChange: (key
           type="button"
           role="radio"
           aria-checked={value === key}
-          aria-label={`Цвет ${key}`}
+          aria-label={t('common.colorN', { name: key })}
           class={cx('ui-colors__item', value === key && 'is-selected')}
           style={{ background: colorVar(key) }}
           onClick={() => {
@@ -156,12 +157,12 @@ export function TimeRange({
   return (
     <div class="ui-row2">
       <TimeField
-        label="Начало"
+        label={t('common.start')}
         value={start}
         // Moving the start keeps the duration.
         onChange={(s) => onChange(s, Math.min(1440, s + (end - start)))}
       />
-      <TimeField label="Конец" value={end} onChange={(e) => onChange(start, Math.max(e, start + 5))} />
+      <TimeField label={t('common.end')} value={end} onChange={(e) => onChange(start, Math.max(e, start + 5))} />
     </div>
   );
 }

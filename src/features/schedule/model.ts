@@ -6,6 +6,7 @@ import { resolveDay } from '@/core/plan';
 import { defineOverrides } from '@/core/store/overrides';
 import { cycleSchema, entityFields, isoDate, minutes } from '@/core/store/schema';
 import { defineCollection, defineDoc, type Entity } from '@/core/store/store';
+import { t } from '@/core/i18n';
 
 // ── Subjects & lesson types ────────────────────────────────────────────────
 
@@ -20,7 +21,7 @@ export interface Subject extends Entity {
 }
 
 export const subjects = defineCollection<Subject>('subjects', {
-  label: 'Предметы',
+  label: 'collections.subjects',
   schema: v.object({
     ...entityFields,
     name: v.string(),
@@ -41,7 +42,7 @@ export interface LessonType extends Entity {
 }
 
 export const lessonTypes = defineCollection<LessonType>('lessonTypes', {
-  label: 'Типы пар',
+  label: 'collections.lessonTypes',
   schema: v.object({ ...entityFields, name: v.string(), short: v.string(), color: v.string(), order: v.number() }),
 });
 
@@ -60,9 +61,17 @@ export interface BellSlot {
 
 export const bells = defineDoc<{ slots: BellSlot[] }>('bells', { slots: [] });
 
-export function bellLabel(n: number): string {
-  return `${n} пара`;
+/** Builds slots from the first start, one duration and an individual break after each pair. */
+export function buildBells(first: Minutes, count: number, length: Minutes, breaks: readonly Minutes[]): BellSlot[] {
+  const slots: BellSlot[] = [];
+  let start = first;
+  for (let n = 1; n <= count && start + length <= 1440; n++) {
+    slots.push({ n, start, end: start + length });
+    start += length + (breaks[n - 1] ?? 10);
+  }
+  return slots;
 }
+
 
 // ── Timetables (one per semester) ──────────────────────────────────────────
 
@@ -104,7 +113,7 @@ const lessonEntries = {
 };
 
 export const timetables = defineCollection<Timetable>('timetables', {
-  label: 'Расписания',
+  label: 'collections.timetables',
   schema: v.object({
     ...entityFields,
     name: v.string(),
@@ -114,7 +123,7 @@ export const timetables = defineCollection<Timetable>('timetables', {
   }),
 });
 
-export const lessonOverrides = defineOverrides<LessonData>('lessonOverrides', 'Изменения пар', lessonEntries);
+export const lessonOverrides = defineOverrides<LessonData>('lessonOverrides', 'collections.lessonOverrides', lessonEntries);
 
 export const sortedTimetables = computed(() =>
   [...timetables.all.value].sort((a, b) => compareDates(b.startDate, a.startDate)),
@@ -197,12 +206,12 @@ const scheduleMeta = defineDoc<{ seeded: boolean }>('scheduleMeta', { seeded: fa
 export function seedSchedule(): void {
   if (scheduleMeta.value.value.seeded) return;
   if (lessonTypes.all.value.length === 0) {
-    const defaults: [string, string, string][] = [
-      ['Лекция', 'Лек', 'c1'],
-      ['Практика', 'Пр', 'c2'],
-      ['Лабораторная', 'Лаб', 'c3'],
-      ['Семинар', 'Сем', 'c5'],
+    const d = (k: 'lecture' | 'practice' | 'lab' | 'seminar', color: string): [string, string, string] => [
+      t(`schedule.defaultTypes.${k}`),
+      t(`schedule.defaultTypes.${k}Short`),
+      color,
     ];
+    const defaults = [d('lecture', 'c1'), d('practice', 'c2'), d('lab', 'c3'), d('seminar', 'c5')];
     defaults.forEach(([name, short, color], order) => lessonTypes.add({ name, short, color, order }));
   }
   scheduleMeta.set({ seeded: true });

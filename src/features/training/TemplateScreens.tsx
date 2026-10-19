@@ -24,9 +24,10 @@ import {
   type ColorKey,
 } from '@/ui';
 import { openExercisePicker } from './ExerciseForm';
-import { exercises, formatTarget, program, RULE_LABELS, templates, type Exercise, type PlannedExercise, type ProgressionRule, type WorkoutTemplate } from './model';
+import { exercises, formatTarget, program, ruleLabel, templates, type Exercise, type PlannedExercise, type ProgressionRule, type WorkoutTemplate } from './model';
+import { t } from '@/core/i18n';
 
-const RPE_TARGETS = [7, 7.5, 8, 8.5, 9].map((v) => ({ value: v, label: `RPE ${v}` }));
+const rpeTargets = (): { value: number; label: string }[] => [7, 7.5, 8, 8.5, 9].map((value) => ({ value, label: t('training.rpeOption', { value }) }));
 
 export function defaultPlanned(e: Exercise): PlannedExercise {
   const base = { id: newId(), exerciseId: e.id, sets: 3, rpe: null, step: e.step };
@@ -40,12 +41,6 @@ export function defaultPlanned(e: Exercise): PlannedExercise {
   }
 }
 
-const RULE_HINTS: Record<ProgressionRule, string> = {
-  double: 'Повторы растут до верха диапазона, потом +вес и повторы сначала.',
-  linear: 'Сделал цель во всех подходах — в следующий раз +вес.',
-  reps: 'Сделал цель — в следующий раз +1 повтор (или +шаг секунд).',
-  none: 'План не меняется сам.',
-};
 
 function PlannedForm({ planned, onSave, onDelete, close }: { planned: PlannedExercise; onSave: (p: PlannedExercise) => void; onDelete: () => void; close: () => void }) {
   const exercise = exercises.get(planned.exerciseId);
@@ -53,23 +48,23 @@ function PlannedForm({ planned, onSave, onDelete, close }: { planned: PlannedExe
   const patch = (p: Partial<PlannedExercise>): void => setD((cur) => ({ ...cur, ...p }));
   if (!exercise) return null;
   const isTime = exercise.measure === 'time';
-  const unit = isTime ? 'с' : 'повт';
+  const unit = isTime ? t('units.sec') : t('units.reps');
   const rules: ProgressionRule[] = exercise.measure === 'weight' ? ['double', 'linear', 'reps', 'none'] : ['reps', 'none'];
 
   return (
     <Form>
-      <Field label="Прогрессия" hint={RULE_HINTS[d.rule]}>
-        <ChoiceChips options={rules.map((r) => ({ value: r, label: RULE_LABELS[r] }))} value={d.rule} onChange={(rule) => rule && patch({ rule })} />
+      <Field label={t('training.progression')} hint={t(`training.ruleHint.${d.rule}`)}>
+        <ChoiceChips options={rules.map((r) => ({ value: r, label: ruleLabel(r) }))} value={d.rule} onChange={(rule) => rule && patch({ rule })} />
       </Field>
-      <NumberStepper label="Подходов" value={d.sets} min={1} max={10} onChange={(sets) => patch({ sets })} />
+      <NumberStepper label={t('training.sets')} value={d.sets} min={1} max={10} onChange={(sets) => patch({ sets })} />
       {d.rule === 'double' ? (
         <div class="ui-row2">
-          <NumberStepper label="Повторы от" value={d.repMin} min={1} max={d.repMax} onChange={(repMin) => patch({ repMin, repGoal: Math.max(repMin, Math.min(d.repGoal, d.repMax)) })} />
-          <NumberStepper label="до" value={d.repMax} min={d.repMin} max={50} onChange={(repMax) => patch({ repMax, repGoal: Math.min(d.repGoal, repMax) })} />
+          <NumberStepper label={t('training.repsFrom')} value={d.repMin} min={1} max={d.repMax} onChange={(repMin) => patch({ repMin, repGoal: Math.max(repMin, Math.min(d.repGoal, d.repMax)) })} />
+          <NumberStepper label={t('training.repsTo')} value={d.repMax} min={d.repMin} max={50} onChange={(repMax) => patch({ repMax, repGoal: Math.min(d.repGoal, repMax) })} />
         </div>
       ) : null}
       <NumberStepper
-        label={d.rule === 'double' ? 'Цель сейчас' : isTime ? 'Время' : 'Повторы'}
+        label={d.rule === 'double' ? t('training.goalNow') : isTime ? t('training.time') : t('training.reps')}
         value={d.repGoal}
         step={isTime ? 5 : 1}
         min={d.rule === 'double' ? d.repMin : 1}
@@ -79,27 +74,27 @@ function PlannedForm({ planned, onSave, onDelete, close }: { planned: PlannedExe
       />
       {exercise.measure !== 'time' && (
         <NumberStepper
-          label={exercise.measure === 'reps' ? 'Доп. вес' : 'Рабочий вес'}
+          label={exercise.measure === 'reps' ? t('training.extraWeight') : t('training.workingWeight')}
           value={d.weight}
           step={d.step || 2.5}
           precision={2}
-          unit="кг"
+          unit={t('units.kg')}
           onChange={(weight) => patch({ weight })}
         />
       )}
       {d.rule !== 'none' && (
         <NumberStepper
-          label={exercise.measure === 'weight' ? 'Шаг веса' : isTime ? 'Шаг, секунд' : 'Шаг'}
+          label={exercise.measure === 'weight' ? t('training.weightStep') : isTime ? t('training.stepSeconds') : t('training.step')}
           value={d.step}
           step={isTime ? 5 : 0.5}
           min={isTime ? 1 : 0.5}
           precision={2}
-          unit={isTime ? 'с' : 'кг'}
+          unit={isTime ? t('units.sec') : t('units.kg')}
           onChange={(step) => patch({ step })}
         />
       )}
-      <Field label="Целевое усилие" hint="Подходы тяжелее этого RPE не считаются «чистыми» для прогрессии.">
-        <ChoiceChips allowNone options={RPE_TARGETS} value={d.rpe} onChange={(rpe) => patch({ rpe })} />
+      <Field label={t('training.targetEffort')} hint={t('training.targetEffortHint')}>
+        <ChoiceChips allowNone options={rpeTargets()} value={d.rpe} onChange={(rpe) => patch({ rpe })} />
       </Field>
       <SheetActions>
         <Button
@@ -111,7 +106,7 @@ function PlannedForm({ planned, onSave, onDelete, close }: { planned: PlannedExe
             close();
           }}
         >
-          Сохранить
+          {t('common.save')}
         </Button>
         <Button
           variant="danger"
@@ -122,7 +117,7 @@ function PlannedForm({ planned, onSave, onDelete, close }: { planned: PlannedExe
             close();
           }}
         >
-          Убрать из тренировки
+          {t('training.removeFromWorkout')}
         </Button>
       </SheetActions>
     </Form>
@@ -130,33 +125,33 @@ function PlannedForm({ planned, onSave, onDelete, close }: { planned: PlannedExe
 }
 
 function createTemplate(): void {
-  const t = templates.add({ name: 'Новая тренировка', color: 'c1', duration: 75, exercises: [] });
+  const tpl = templates.add({ name: t('training.newWorkout'), color: 'c1', duration: 75, exercises: [] });
   haptic('success');
-  navigate(`health/template/${t.id}`);
+  navigate(`health/template/${tpl.id}`);
 }
 
 export function TemplatesScreen() {
   const list = templates.all.value;
   return (
-    <Page title="Тренировки" back actions={<Button size="sm" variant="ghost" icon="plus" onClick={createTemplate}>Новая</Button>}>
+    <Page title={t('training.workouts')} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={createTemplate}>{t('common.new')}</Button>}>
       {list.length === 0 ? (
         <EmptyState
           icon="dumbbell"
-          title="Тренировок нет"
-          text="Тренировка — набор упражнений с планом. Потом ставишь её в программу на нужные дни."
-          action={<Button variant="primary" icon="plus" onClick={createTemplate}>Создать</Button>}
+          title={t('training.noWorkouts')}
+          text={t('training.noWorkoutsText')}
+          action={<Button variant="primary" icon="plus" onClick={createTemplate}>{t('training.create')}</Button>}
         />
       ) : (
         <Section>
           <List>
-            {list.map((t) => (
+            {list.map((tpl) => (
               <ListRow
-                key={t.id}
-                leading={<span class="color-dot" style={{ background: colorVar(t.color) }} />}
-                title={t.name}
-                subtitle={t.exercises.map((x) => exercises.get(x.exerciseId)?.name).filter(Boolean).join(', ') || 'Пусто'}
+                key={tpl.id}
+                leading={<span class="color-dot" style={{ background: colorVar(tpl.color) }} />}
+                title={tpl.name}
+                subtitle={tpl.exercises.map((x) => exercises.get(x.exerciseId)?.name).filter(Boolean).join(', ') || t('training.empty')}
                 chevron
-                onClick={() => navigate(`health/template/${t.id}`)}
+                onClick={() => navigate(`health/template/${tpl.id}`)}
               />
             ))}
           </List>
@@ -171,9 +166,9 @@ function isInProgram(id: string): boolean {
 }
 
 export function TemplateEditor({ params }: RouteProps) {
-  const t = templates.byId(params.id);
-  if (!t) return <Page title="Тренировка" back><EmptyState icon="dumbbell" title="Не найдено" /></Page>;
-  const patch = (p: Partial<WorkoutTemplate>): void => void templates.update(t.id, p);
+  const tpl = templates.byId(params.id);
+  if (!tpl) return <Page title={t('training.workout')} back><EmptyState icon="dumbbell" title={t('common.notFound')} /></Page>;
+  const patch = (p: Partial<WorkoutTemplate>): void => void templates.update(tpl.id, p);
   const setList = (list: PlannedExercise[]): void => patch({ exercises: list });
 
   const edit = (p: PlannedExercise): void =>
@@ -181,16 +176,16 @@ export function TemplateEditor({ params }: RouteProps) {
       (close) => (
         <PlannedForm
           planned={p}
-          onSave={(next) => setList(t.exercises.map((x) => (x.id === p.id ? next : x)))}
-          onDelete={() => setList(t.exercises.filter((x) => x.id !== p.id))}
+          onSave={(next) => setList(tpl.exercises.map((x) => (x.id === p.id ? next : x)))}
+          onDelete={() => setList(tpl.exercises.filter((x) => x.id !== p.id))}
           close={close}
         />
       ),
-      { title: exercises.get(p.exerciseId)?.name ?? 'Упражнение' },
+      { title: exercises.get(p.exerciseId)?.name ?? t('training.exercise') },
     );
 
   const move = (index: number, dir: -1 | 1): void => {
-    const list = [...t.exercises];
+    const list = [...tpl.exercises];
     const [item] = list.splice(index, 1);
     if (!item) return;
     list.splice(index + dir, 0, item);
@@ -198,43 +193,43 @@ export function TemplateEditor({ params }: RouteProps) {
   };
 
   const remove = async (): Promise<void> => {
-    if (isInProgram(t.id)) {
-      await confirm({ title: 'Тренировка стоит в программе', message: 'Сначала убери её из дней программы.', confirmLabel: 'Понятно' });
+    if (isInProgram(tpl.id)) {
+      await confirm({ title: t('training.inProgram'), message: t('training.inProgramText'), confirmLabel: t('common.understood') });
       return;
     }
-    if (await confirm({ title: `Удалить «${t.name}»?`, message: 'Журнал прошлых тренировок сохранится.', confirmLabel: 'Удалить', danger: true })) {
-      templates.remove(t.id);
+    if (await confirm({ title: t('schedule.deleteNamed', { name: tpl.name }), message: t('training.deleteKeepsLog'), confirmLabel: t('common.delete'), danger: true })) {
+      templates.remove(tpl.id);
       navigate('health/templates', { replace: true });
     }
   };
 
   return (
-    <Page title={t.name} back>
+    <Page title={tpl.name} back>
       <Section>
         <Form>
-          <TextField label="Название" value={t.name} onValue={(name) => patch({ name })} />
-          <Field label="Цвет">
-            <ColorPicker value={t.color} onChange={(color: ColorKey) => patch({ color })} />
+          <TextField label={t('common.name')} value={tpl.name} onValue={(name) => patch({ name })} />
+          <Field label={t('common.color')}>
+            <ColorPicker value={tpl.color} onChange={(color: ColorKey) => patch({ color })} />
           </Field>
-          <NumberStepper label="Длительность" value={t.duration} step={5} min={10} max={300} unit="мин" onChange={(duration) => patch({ duration })} />
+          <NumberStepper label={t('training.duration')} value={tpl.duration} step={5} min={10} max={300} unit={t('units.min')} onChange={(duration) => patch({ duration })} />
         </Form>
       </Section>
-      <Section title="Упражнения">
-        {t.exercises.length > 0 && (
+      <Section title={t('training.exercises')}>
+        {tpl.exercises.length > 0 && (
           <List>
-            {t.exercises.map((p, i) => {
+            {tpl.exercises.map((p, i) => {
               const e = exercises.get(p.exerciseId);
               return (
                 <ListRow
                   key={p.id}
-                  title={e?.name ?? 'Удалено'}
-                  subtitle={e ? `${formatTarget(p, e.measure)} · ${RULE_LABELS[p.rule].toLowerCase()}` : ''}
+                  title={e?.name ?? t('training.deleted')}
+                  subtitle={e ? t('training.targetLine', { target: formatTarget(p, e.measure), rule: ruleLabel(p.rule).toLowerCase() }) : ''}
                   trailing={
                     i > 0 ? (
                       <IconButton
                         icon="chevronDown"
                         class="rotate-180"
-                        label="Выше"
+                        label={t('training.up')}
                         onClick={(ev) => {
                           ev.stopPropagation();
                           move(i, -1);
@@ -254,17 +249,17 @@ export function TemplateEditor({ params }: RouteProps) {
           onClick={() =>
             openExercisePicker((e) => {
               const p = defaultPlanned(e);
-              setList([...t.exercises, p]);
+              setList([...tpl.exercises, p]);
               setTimeout(() => edit(p), 320);
             })
           }
         >
-          Добавить упражнение
+          {t('training.addExercise')}
         </Button>
       </Section>
       <Section>
         <Button variant="danger" block icon="trash" onClick={() => void remove()}>
-          Удалить тренировку
+          {t('training.deleteWorkout')}
         </Button>
       </Section>
     </Page>

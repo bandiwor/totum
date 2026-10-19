@@ -3,6 +3,7 @@ import { today } from '@/core/date';
 import { overdueTasks, tasksOn } from './model';
 import { openTaskForm, TaskForm } from './TaskForm';
 import { TasksWidget } from './TasksWidget';
+import { t } from '@/core/i18n';
 
 export const tasksFeature: FeatureDef = {
   id: 'tasks',
@@ -20,16 +21,16 @@ export const tasksFeature: FeatureDef = {
         })),
     },
   ],
-  dayActions: [{ id: 'task', label: 'Задача', icon: 'tasks', order: 0, run: (date) => openTaskForm({ preset: { date } }) }],
+  dayActions: [{ id: 'task', label: 'tasks.task', icon: 'tasks', order: 0, run: (date) => openTaskForm({ preset: { date } }) }],
   quickActions: [
     {
       id: 'task',
-      label: 'Задача',
+      label: 'tasks.task',
       icon: 'tasks',
       order: 20,
       hint: () => {
         const left = tasksOn(today()).filter((t) => !t.done).length + overdueTasks().length;
-        return left ? `осталось ${left}` : null;
+        return left ? t('tasks.left', { count: left }) : null;
       },
       screen: ({ close }) => <TaskForm close={close} />,
     },

@@ -20,6 +20,7 @@ import {
   type ColorKey,
 } from '@/ui';
 import { subjects, timetables, type Subject } from './model';
+import { t } from '@/core/i18n';
 
 function isUsed(id: string): boolean {
   return timetables.all.value.some((t) => t.cycle.days.some((day) => day.some((l) => l.subjectId === id)));
@@ -45,10 +46,10 @@ function SubjectForm({ subject, close }: { subject: Subject | null; close: () =>
   const remove = async (): Promise<void> => {
     if (!subject) return;
     if (isUsed(subject.id)) {
-      await confirm({ title: 'Предмет есть в расписании', message: 'Убери его из расписания или отправь в архив.', confirmLabel: 'Понятно' });
+      await confirm({ title: t('schedule.subjectInUse'), message: t('schedule.subjectInUseText'), confirmLabel: t('common.understood') });
       return;
     }
-    if (await confirm({ title: `Удалить «${subject.name}»?`, confirmLabel: 'Удалить', danger: true })) {
+    if (await confirm({ title: t('schedule.deleteNamed', { name: subject.name }), confirmLabel: t('common.delete'), danger: true })) {
       subjects.remove(subject.id);
       close();
     }
@@ -56,27 +57,27 @@ function SubjectForm({ subject, close }: { subject: Subject | null; close: () =>
 
   return (
     <Form>
-      <TextField label="Название" value={name} onValue={setName} placeholder="Матанализ" autoFocus={!subject} />
-      <Field label="Цвет">
+      <TextField label={t('common.name')} value={name} onValue={setName} placeholder={t('schedule.subjectPlaceholder')} autoFocus={!subject} />
+      <Field label={t('common.color')}>
         <ColorPicker value={color} onChange={setColor} />
       </Field>
-      <TextField label="Преподаватель" value={teacher} onValue={setTeacher} placeholder="Иванов И. И." />
-      <TextField label="Аудитория" value={room} onValue={setRoom} placeholder="Обычная аудитория" />
-      <Field label="Корпус (место)" hint="Для расчёта дороги. Места настраиваются в «Места и дорога».">
+      <TextField label={t('schedule.teacher')} value={teacher} onValue={setTeacher} placeholder={t('schedule.teacherPlaceholder')} />
+      <TextField label={t('schedule.room')} value={room} onValue={setRoom} placeholder={t('schedule.roomPlaceholder')} />
+      <Field label={t('schedule.building')} hint={t('schedule.buildingHint')}>
         <PlacePicker value={placeId} onChange={setPlaceId} />
       </Field>
       {subject && (
         <List>
-          <ListRow title="В архиве" subtitle="Скрыт из выбора, история сохраняется" trailing={<Switch label="Архив" checked={archived} onChange={setArchived} />} />
+          <ListRow title={t('common.archived')} subtitle={t('schedule.archivedHint')} trailing={<Switch label={t('common.archive')} checked={archived} onChange={setArchived} />} />
         </List>
       )}
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!name.trim()} feedback={false} onClick={save}>
-          Сохранить
+          {t('common.save')}
         </Button>
         {subject && (
           <Button variant="danger" block icon="trash" onClick={() => void remove()}>
-            Удалить
+            {t('common.delete')}
           </Button>
         )}
       </SheetActions>
@@ -85,15 +86,15 @@ function SubjectForm({ subject, close }: { subject: Subject | null; close: () =>
 }
 
 export function openSubjectForm(subject: Subject | null): void {
-  openSheet((close) => <SubjectForm subject={subject} close={close} />, { title: subject ? subject.name : 'Новый предмет' });
+  openSheet((close) => <SubjectForm subject={subject} close={close} />, { title: subject ? subject.name : t('schedule.newSubject') });
 }
 
 export function SubjectsScreen() {
   const all = [...subjects.all.value].sort((a, b) => Number(a.archived) - Number(b.archived) || a.name.localeCompare(b.name, 'ru'));
   return (
-    <Page title="Предметы" back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openSubjectForm(null)}>Новый</Button>}>
+    <Page title={t('schedule.subjects')} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openSubjectForm(null)}>{t('common.newM')}</Button>}>
       {all.length === 0 ? (
-        <EmptyState icon="notes" title="Предметов нет" action={<Button variant="primary" icon="plus" onClick={() => openSubjectForm(null)}>Добавить предмет</Button>} />
+        <EmptyState icon="notes" title={t('schedule.noSubjects')} action={<Button variant="primary" icon="plus" onClick={() => openSubjectForm(null)}>{t('schedule.addSubject')}</Button>} />
       ) : (
         <Section>
           <List>
@@ -101,7 +102,7 @@ export function SubjectsScreen() {
               <ListRow
                 key={s.id}
                 leading={<span class="color-dot" style={{ background: colorVar(s.color), opacity: s.archived ? 0.4 : 1 }} />}
-                title={s.archived ? `${s.name} (архив)` : s.name}
+                title={s.archived ? t('common.archivedSuffix', { name: s.name }) : s.name}
                 {...([s.teacher, s.room].filter(Boolean).length ? { subtitle: [s.teacher, s.room].filter(Boolean).join(' · ') } : {})}
                 chevron
                 onClick={() => openSubjectForm(s)}

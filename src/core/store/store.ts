@@ -1,5 +1,6 @@
 import { batch, computed, signal, type ReadonlySignal, type Signal } from '@preact/signals';
 import type { GenericSchema } from 'valibot';
+import type { PlainKey } from '../i18n';
 import { newId } from '../id';
 import { db, type StoredRecord } from './idb';
 
@@ -44,7 +45,7 @@ export function flushWrites(): Promise<void> {
 interface AnyCollection {
   readonly name: string;
   readonly schema: GenericSchema | undefined;
-  readonly label: string;
+  readonly label: PlainKey;
   hydrate(values: unknown[]): void;
   snapshot(): unknown[];
 }
@@ -67,7 +68,7 @@ export class Collection<T extends Entity> implements AnyCollection {
 
   constructor(
     readonly name: string,
-    readonly label: string,
+    readonly label: PlainKey,
     readonly schema: GenericSchema | undefined,
   ) {}
 
@@ -123,7 +124,7 @@ export class Collection<T extends Entity> implements AnyCollection {
 /** Defines a persistent collection. Call once at module level. */
 export function defineCollection<T extends Entity>(
   name: string,
-  opts: { label: string; schema?: GenericSchema },
+  opts: { label: PlainKey; schema?: GenericSchema },
 ): Collection<T> {
   if (collections.has(name)) throw new Error(`Collection "${name}" defined twice`);
   const c = new Collection<T>(name, opts.label, opts.schema);

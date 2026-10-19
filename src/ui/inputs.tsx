@@ -3,6 +3,7 @@ import { useId } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
 import { fx, type FxKind } from '@/core/fx';
 import { cx, Icon } from './primitives';
+import { t } from '@/core/i18n';
 
 // ── Segmented control ───────────────────────────────────────────────────────
 
@@ -217,7 +218,7 @@ export function NumberStepper({
     <div class="ui-stepper">
       {label && <span class="ui-stepper__label">{label}</span>}
       <div class="ui-stepper__row">
-        <button type="button" class="ui-stepper__btn" aria-label="Меньше" onClick={() => bump(-1)}>
+        <button type="button" class="ui-stepper__btn" aria-label={t('common.less')} onClick={() => bump(-1)}>
           <Icon name="minus" />
         </button>
         <label class="ui-stepper__value">
@@ -237,7 +238,7 @@ export function NumberStepper({
           />
           {unit && <span class="ui-stepper__unit">{unit}</span>}
         </label>
-        <button type="button" class="ui-stepper__btn" aria-label="Больше" onClick={() => bump(1)}>
+        <button type="button" class="ui-stepper__btn" aria-label={t('common.more')} onClick={() => bump(1)}>
           <Icon name="plus" />
         </button>
       </div>
