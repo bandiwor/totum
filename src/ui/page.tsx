@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { useEffect, useRef } from 'preact/hooks';
 import { goBack } from '@/core/router';
 import { IconButton } from './primitives';
 import { t } from '@/core/i18n';
@@ -10,6 +11,7 @@ export function Page({
   back = false,
   actions,
   toolbar,
+  scrollKey,
   children,
 }: {
   title: string;
@@ -18,8 +20,14 @@ export function Page({
   actions?: ComponentChildren;
   /** Sticky content under the title (segmented control, date strip…). */
   toolbar?: ComponentChildren;
+  /** Scrolls the content back to the top when this value changes (e.g. a segment switch). */
+  scrollKey?: string;
   children: ComponentChildren;
 }) {
+  const content = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    content.current?.scrollTo(0, 0);
+  }, [scrollKey]);
   return (
     <div class="ui-page">
       <header class="ui-header">
@@ -31,7 +39,9 @@ export function Page({
         {large && <h1 class="ui-header__large">{title}</h1>}
         {toolbar && <div class="ui-header__toolbar">{toolbar}</div>}
       </header>
-      <div class="ui-page__content">{children}</div>
+      <div class="ui-page__content" ref={content}>
+        {children}
+      </div>
     </div>
   );
 }

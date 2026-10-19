@@ -41,10 +41,12 @@ export interface LineChartProps {
   height?: number;
   /** Optional horizontal reference (e.g. 100 for an index). */
   reference?: number;
+  /** Raw observations drawn as muted dots under the line (e.g. weigh-ins under a trend). */
+  dots?: readonly { date: ISODate; value: number }[];
 }
 
 /** Single-series line with optional trend, recessive grid and a touch crosshair. */
-export function LineChart({ points, trendAt, format = (v) => v.toFixed(0), height = 190, reference }: LineChartProps) {
+export function LineChart({ points, trendAt, format = (v) => v.toFixed(0), height = 190, reference, dots = [] }: LineChartProps) {
   const [ref, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
   useEffect(() => setActive(null), [points]);
@@ -55,7 +57,7 @@ export function LineChart({ points, trendAt, format = (v) => v.toFixed(0), heigh
   const last = points[points.length - 1]!.date;
   const span = Math.max(1, diffDays(first, last));
   const trendValues = trendAt ? [trendAt(first), trendAt(last)] : [];
-  const values = [...points.map((p) => p.value), ...trendValues, ...(reference !== undefined ? [reference] : [])];
+  const values = [...points.map((p) => p.value), ...dots.map((d) => d.value), ...trendValues, ...(reference !== undefined ? [reference] : [])];
   let lo = Math.min(...values);
   let hi = Math.max(...values);
   const pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.05 || 1;
@@ -118,11 +120,17 @@ export function LineChart({ points, trendAt, format = (v) => v.toFixed(0), heigh
           {trendAt && points.length > 1 && (
             <line class="ui-chart__trend" x1={x(first)} y1={y(trendAt(first))} x2={x(last)} y2={y(trendAt(last))} />
           )}
+          {dots.map((d, i) => (
+            <circle key={`raw${i}`} class="ui-chart__raw" cx={x(d.date)} cy={y(d.value)} r={3} />
+          ))}
           <path class="ui-chart__line" d={path} />
           {sel && <line class="ui-chart__cross" x1={x(sel.date)} x2={x(sel.date)} y1={PAD.top} y2={PAD.top + h} />}
-          {points.map((p, i) => (
-            <circle key={i} class={i === active ? 'ui-chart__dot is-active' : 'ui-chart__dot'} cx={x(p.date)} cy={y(p.value)} r={i === active ? 6 : 4} />
-          ))}
+          {/* With raw dots the line itself carries the series; only the selected point is marked. */}
+          {points.map((p, i) =>
+            dots.length && i !== active ? null : (
+              <circle key={i} class={i === active ? 'ui-chart__dot is-active' : 'ui-chart__dot'} cx={x(p.date)} cy={y(p.value)} r={i === active ? 6 : 4} />
+            ),
+          )}
         </svg>
       )}
       {sel && (

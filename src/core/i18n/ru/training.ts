@@ -173,14 +173,6 @@ export const training = {
 } as const;
 
 export const stubs = {
-  health: {
-    tabs: { training: 'Тренировки', food: 'Питание', body: 'Тело' },
-    food: 'Еда',
-    intake: 'Приём и вода',
-    weight: 'Вес',
-    foodText: 'Рационы-циклы, план/факт, база продуктов и блюд, нормы КБЖУ, приём и вода.',
-    bodyText: 'Рост, вес с трендом, расчёт нормы.',
-  },
   money: {
     title: 'Деньги',
     overview: 'Обзор',

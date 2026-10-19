@@ -57,4 +57,10 @@ export const collections = {
   workoutTemplates: 'Тренировки (шаблоны)',
   workoutOverrides: 'Изменения тренировок',
   workoutSessions: 'Тренировки (журнал)',
+  foods: 'Продукты и блюда',
+  foodLog: 'Журнал питания',
+  intakeItems: 'Добавки и лекарства',
+  intakeLog: 'Журнал приёма',
+  waterLog: 'Вода',
+  weightLog: 'Вес',
 } as const;

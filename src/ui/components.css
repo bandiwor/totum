@@ -951,6 +951,9 @@
   stroke-width: 2;
   transition: r var(--dur-fast);
 }
+.ui-chart__raw {
+  fill: var(--text-3);
+}
 .ui-chart__cross {
   stroke: var(--text-3);
   stroke-width: 1;
@@ -981,4 +984,8 @@
   font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--text);
+}
+.ui-strip + .ui-section,
+.ui-card + .ui-section {
+  margin-top: var(--space-4);
 }

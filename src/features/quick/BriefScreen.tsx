@@ -54,11 +54,13 @@ function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
   }
 }
 
+const AGENDA_ICONS: Record<string, IconName> = { tasks: 'tasks', nutrition: 'utensils', intake: 'pill' };
+
 const fromAgenda = (a: AgendaItem): BriefLine => ({
   key: `${a.source}-${a.id}`,
   time: a.time === null ? '' : formatTime(a.time),
   title: a.title,
-  icon: 'tasks',
+  icon: AGENDA_ICONS[a.source] ?? 'tasks',
   tone: 'todo',
 });
 

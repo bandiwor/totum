@@ -9,6 +9,7 @@ import { scheduleFeature } from '@/features/schedule';
 import { tasksFeature } from '@/features/tasks';
 import { workFeature } from '@/features/work';
 import { trainingFeature } from '@/features/training';
+import { nutritionFeature } from '@/features/nutrition';
 import { quickFeature } from '@/features/quick';
 import { settingsFeature } from '@/features/settings';
 
@@ -24,6 +25,7 @@ export const FEATURES: readonly FeatureDef[] = [
   tasksFeature,
   workFeature,
   trainingFeature,
+  nutritionFeature,
   quickFeature,
   settingsFeature,
 ];

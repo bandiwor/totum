@@ -16,6 +16,7 @@ export function PlanScreen() {
     <Page
       title={t('plan.title')}
       large
+      scrollKey={tab.value}
       actions={tab.value === 'tasks' ? <IconButton icon="plus" label={t('plan.newTask')} variant="accent" onClick={() => openTaskForm()} /> : undefined}
       toolbar={<SegmentedControl options={TABS.map((value) => ({ value, label: t(`plan.tabs.${value}`) }))} value={tab.value} onChange={(v) => (tab.value = v)} />}
     >
