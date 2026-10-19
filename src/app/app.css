@@ -1,0 +1,347 @@
+/* ── Shell ── */
+.app {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.app__stage {
+  position: absolute;
+  inset: 0;
+}
+.app__screen {
+  position: absolute;
+  inset: 0;
+}
+.app__screen.nav-push { animation: ui-page-push var(--dur-slow) var(--ease-out); }
+.app__screen.nav-pop { animation: ui-page-pop var(--dur-slow) var(--ease-out); }
+.app__screen.nav-tab { animation: ui-page-fade var(--dur-base) var(--ease-out); }
+
+/* ── Tab bar ── */
+.tabbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  backdrop-filter: blur(24px) saturate(1.4);
+  border-top: 1px solid var(--border);
+}
+.ui-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--text-3);
+  font-size: 10px;
+  font-weight: 600;
+}
+.ui-tab.is-active {
+  color: var(--accent);
+}
+.ui-tab:active .ui-icon {
+  transform: scale(0.88);
+}
+.ui-tab .ui-icon {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+/* ── Super button ── */
+.ui-fab {
+  position: absolute;
+  right: var(--space-4);
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-4));
+  z-index: 11;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 40%, transparent), var(--shadow-lg);
+}
+
+.quick {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: calc(var(--safe-top) + var(--space-4)) var(--space-4) calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-4));
+}
+.quick__backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
+  animation: quick-fade var(--dur-base) var(--ease-out) both;
+}
+.quick.is-exit .quick__backdrop {
+  animation: quick-fade var(--dur-base) var(--ease-out) reverse both;
+}
+.quick__panel {
+  position: relative;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 76px;
+}
+.quick__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+.ui-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 112px;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  text-align: left;
+  /* Staggered entrance; --i is the tile index. */
+  animation: quick-tile var(--dur-slow) var(--ease-spring) both;
+  animation-delay: calc(var(--i) * 25ms);
+}
+.quick.is-exit .ui-tile {
+  animation: quick-fade var(--dur-fast) linear reverse both;
+}
+.ui-tile--wide {
+  grid-column: span 2;
+  min-height: 96px;
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.ui-tile--wide .ui-tile__icon {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+.ui-tile__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--accent);
+}
+.ui-tile__label {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+.ui-tile__hint {
+  margin-top: -8px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.quick__close {
+  position: absolute;
+  right: var(--space-4);
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-4));
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text);
+  animation: quick-spin var(--dur-slow) var(--ease-spring) both;
+}
+.quick__screen {
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  animation: quick-tile var(--dur-slow) var(--ease-spring) both;
+}
+.quick__screen-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) 0;
+}
+.quick__screen-head h2 {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+.quick__back {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  color: var(--text-2);
+}
+.quick__screen-body {
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+@keyframes quick-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes quick-tile {
+  from { opacity: 0; transform: translateY(24px) scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes quick-spin {
+  from { transform: rotate(-90deg) scale(0.6); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ── Brief ("Что сейчас") ── */
+.brief {
+  display: flex;
+  flex-direction: column;
+}
+.brief__line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: var(--space-2) 0;
+}
+.brief__line + .brief__line {
+  box-shadow: inset 0 1px 0 var(--border);
+}
+.brief__time {
+  width: 86px;
+  flex: none;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.brief__icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+  flex: none;
+}
+.brief__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.brief__title {
+  font-weight: 600;
+}
+.brief__note {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.brief__line.is-travel .brief__icon { color: var(--accent); background: var(--accent-soft); }
+.brief__line.is-free .brief__icon { color: var(--accent-2); background: var(--accent-2-soft); }
+.brief__line.is-late .brief__icon,
+.brief__line.is-late .brief__note { color: var(--danger); }
+.brief__group {
+  margin-top: var(--space-3);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Update banner ── */
+.update-banner {
+  position: absolute;
+  left: var(--space-4);
+  right: calc(var(--space-4) + 72px);
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + var(--space-4));
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 60px;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface-3);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  animation: ui-toast-in var(--dur-slow) var(--ease-spring);
+}
+.update-banner button {
+  min-height: var(--tap);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-weight: 700;
+  font-size: var(--fs-sm);
+}
+
+/* ── Today ── */
+.today__date {
+  margin: calc(-1 * var(--space-2)) 0 var(--space-5);
+  color: var(--text-2);
+}
+.today__free {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.today__free-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+.today__free-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+}
+.today__free-row .ui-stat__value {
+  font-size: var(--fs-sm);
+}
+.today__hint {
+  margin-top: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+
+/* ── Settings / sheets ── */
+.settings__note,
+.sheet-note {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin: var(--space-2) var(--space-1);
+}
+.sheet-error {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-sm);
+}
+.import-preview {
+  margin-top: var(--space-3);
+}
+.mono .ui-field__input {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+}

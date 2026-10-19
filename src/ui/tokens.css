@@ -1,0 +1,106 @@
+/* Design tokens. Components use only these variables, so a theme is just a token set. */
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-rounded: ui-rounded, -apple-system, 'SF Pro Rounded', var(--font);
+
+  --fs-xs: 12px;
+  --fs-sm: 14px;
+  --fs-md: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: 34px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  --tap: 44px;
+  --tabbar-h: 56px;
+  --header-h: 52px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
+}
+
+/* Dark (default) */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0c0d10;
+  --surface: #16171b;
+  --surface-2: #1e1f25;
+  --surface-3: #282a31;
+  --border: rgba(255, 255, 255, 0.07);
+  --text: #f2f3f5;
+  --text-2: #a3a6ae;
+  --text-3: #6c7079;
+  --overlay: rgba(0, 0, 0, 0.55);
+
+  /* Two accents: primary for actions, secondary for progress/positive. */
+  --accent: #8b93ff;
+  --accent-soft: rgba(139, 147, 255, 0.16);
+  --accent-contrast: #0c0d10;
+  --accent-2: #3ddc97;
+  --accent-2-soft: rgba(61, 220, 151, 0.14);
+
+  --danger: #ff6b6b;
+  --danger-soft: rgba(255, 107, 107, 0.14);
+  --warning: #ffb547;
+  --warning-soft: rgba(255, 181, 71, 0.14);
+
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+  /* Muted categorical palette for subjects, lesson types, categories. */
+  --c-1: #8b93ff;
+  --c-2: #3ddc97;
+  --c-3: #ffb547;
+  --c-4: #ff7a90;
+  --c-5: #5ec8ff;
+  --c-6: #c08bff;
+  --c-7: #ff9d5c;
+  --c-8: #9aa3b2;
+}
+
+/* Light — prepared, not tuned yet. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface-2: #f0f1f4;
+  --surface-3: #e5e7ec;
+  --border: rgba(0, 0, 0, 0.08);
+  --text: #111216;
+  --text-2: #5d616b;
+  --text-3: #9095a0;
+  --overlay: rgba(0, 0, 0, 0.3);
+  --accent: #5b63f0;
+  --accent-soft: rgba(91, 99, 240, 0.12);
+  --accent-contrast: #ffffff;
+  --accent-2: #13a86b;
+  --accent-2-soft: rgba(19, 168, 107, 0.12);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+  }
+}

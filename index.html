@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0c0d10" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="description" content="Личный органайзер: день, учёба, тренировки, питание, деньги, записи." />
+
+    <!-- iOS standalone -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Органайзер" />
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+
+    <title>Органайзер</title>
+    <style>
+      html, body { background: #0c0d10; margin: 0; height: 100%; }
+      #splash { position: fixed; inset: 0; display: grid; place-items: center; }
+      #splash div { width: 56px; height: 56px; border-radius: 16px; background: #8b93ff; animation: splash 1.2s ease-in-out infinite; }
+      @keyframes splash { 50% { transform: scale(0.85); opacity: 0.6; } }
+    </style>
+  </head>
+  <body>
+    <div id="splash"><div></div></div>
+    <div id="app"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
