@@ -5,6 +5,7 @@ import { navigate } from '@/core/router';
 import { languageById } from '@/core/i18n/languages';
 import { AccentPicker } from './AccentPicker';
 import { StorageSheet } from './StorageSheet';
+import { ResetSheet } from './ResetSheet';
 import { BackupsSheet, ExportSheet, ImportSheet } from './DataSheets';
 import { t } from '@/core/i18n';
 
@@ -33,6 +34,7 @@ export function SettingsScreen() {
           <ListRow icon="download" title={t('settings.export')} subtitle={t('settings.exportSub')} chevron onClick={() => openSheet(() => <ExportSheet />, { title: t('settings.export') })} />
           <ListRow icon="upload" title={t('settings.import')} subtitle={t('settings.importSub')} chevron onClick={() => openSheet((close) => <ImportSheet close={close} />, { title: t('settings.import') })} />
           <ListRow icon="history" title={t('settings.backups')} subtitle={t('settings.backupsSub')} chevron onClick={() => openSheet((close) => <BackupsSheet close={close} />, { title: t('settings.backups') })} />
+          <ListRow icon="trash" danger title={t('reset.title')} subtitle={t('reset.sub')} chevron onClick={() => openSheet((close) => <ResetSheet close={close} />, { title: t('reset.title') })} />
         </List>
         {storagePersisted.value === false && (
           <p class="settings__note">{t('settings.evictionWarning')}</p>

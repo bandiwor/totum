@@ -1,7 +1,5 @@
 export const today = {
   routeUnknown: 'Travel {from} → {to} not set',
-  packsTitle: 'Start with a pack',
-  packsText: 'The app is empty. Add ready-made categories, exercises and foods, or paste your own pack from an AI.',
   free: 'Free',
   atHome: 'At home',
   away: 'Away',

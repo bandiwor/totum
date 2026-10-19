@@ -31,25 +31,5 @@ export function installNativeFeel(): void {
     window.matchMedia('(display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
   document.documentElement.dataset.standalone = String(standalone);
-  if (standalone) fitStandaloneHeight();
 }
 
-/**
- * iOS home-screen apps with a translucent status bar report a layout viewport
- * shorter than the screen by the top inset, so `inset: 0` stops ~59pt above
- * the bottom edge. Size the app from the physical screen instead (never smaller
- * than what the browser reports).
- */
-function fitStandaloneHeight(): void {
-  const root = document.documentElement;
-  const apply = (): void => {
-    const portrait = window.innerHeight >= window.innerWidth;
-    const screenH = portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    const h = Math.max(screenH, window.innerHeight);
-    if (h > window.innerHeight) root.style.setProperty('--app-h', `${h}px`);
-    else root.style.removeProperty('--app-h');
-  };
-  apply();
-  window.addEventListener('resize', apply);
-  window.addEventListener('orientationchange', () => setTimeout(apply, 300));
-}

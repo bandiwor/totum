@@ -6,6 +6,8 @@ import { currentTab, direction, matchRoute, navigate, path } from '@/core/router
 import { openQuickMenu, QuickMenu } from '@/features/quick/QuickMenu';
 import { FxLayer } from '@/ui/FxLayer';
 import { ScreenStack } from './ScreenStack';
+import { settings } from '@/core/settings';
+import { Onboarding } from '@/features/onboarding/Onboarding';
 import { useSlideSelect } from '@/ui/slideSelect';
 import { cx, Icon, OverlayHost } from '@/ui';
 import { t } from '@/core/i18n';
@@ -95,6 +97,14 @@ export function App() {
   }, [match, tabHidden, defaultTab]);
 
   const Screen = match?.component;
+  if (!settings.value.value.onboarded) {
+    return (
+      <div class="app">
+        <Onboarding />
+        <OverlayHost />
+      </div>
+    );
+  }
   return (
     <div class="app">
       <main class="app__stage">

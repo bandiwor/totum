@@ -111,3 +111,44 @@ export const storage = {
   protect: 'Add the app to the Home Screen and export from time to time — keep the text in Notes or send it to yourself. Backups live in the same storage and won’t survive a wipe.',
   request: 'Request persistent',
 };
+
+export const onboarding = {
+  tagline: 'Your day, studies, training, food, sleep, money and notes — in one place. No accounts: everything stays on your phone.',
+  day: 'Day & plan',
+  dayText: 'Classes, work and to-dos on a timeline — with travel between places and free slots.',
+  health: 'Health',
+  healthText: 'Training programs with auto-progression, meal plans and macros, water, supplements, sleep.',
+  money: 'Money',
+  moneyText: 'Expenses and income, recurring payments, shift earnings, savings goals.',
+  notes: 'Notes',
+  notesText: 'Diary, books, lists — collections with your own fields and search.',
+  quick: 'The + button',
+  quickText: 'Quick actions: log food, start a workout, add an expense — in one tap.',
+  startWith: 'Start with',
+  later: 'Packs can be added or removed later: Settings → Packs. An AI can build your own.',
+  blank: 'You’ll start from scratch and create categories and lists yourself.',
+  start: 'Start',
+};
+
+export const reset = {
+  title: 'Reset',
+  sub: 'Clear sections or everything to factory state',
+  text: 'Choose what to clear. A backup is saved first — you can restore it in “Backups”.',
+  areas: {
+    plan: 'Plan: schedule, places, tasks, work',
+    training: 'Training',
+    nutrition: 'Food, water, supplements, weight',
+    sleep: 'Sleep',
+    money: 'Money',
+    notes: 'Notes',
+    settings: 'Settings and languages',
+  },
+  selected: 'Reset selected',
+  all: 'Reset everything to factory state',
+  someTitle: 'Clear the selected sections?',
+  allTitle: 'Reset everything?',
+  message: 'The data will be deleted from this device. A backup is saved before resetting.',
+  confirm: 'Reset',
+  backupReason: 'Before reset',
+  done: 'Done',
+};

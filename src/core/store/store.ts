@@ -197,7 +197,8 @@ function distribute(records: readonly StoredRecord[]): void {
   batch(() => {
     for (const c of collections.values()) c.hydrate(byCollection.get(c.name) ?? []);
     for (const [name, values] of byCollection) if (!collections.has(name)) orphans[name] = values;
-    for (const d of docs.values()) if (docValues.has(d.name)) d.hydrate(docValues.get(d.name));
+    // A doc missing from the data (reset, older backup) falls back to its defaults.
+    for (const d of docs.values()) d.hydrate(docValues.get(d.name) ?? {});
   });
 }
 
@@ -257,4 +258,13 @@ export function registeredCollections(): readonly AnyCollection[] {
 
 export function registeredDocs(): readonly AnyDoc[] {
   return [...docs.values()];
+}
+
+/** Clears the given collections and resets the given docs to defaults (everything when `null`). */
+export async function resetData(scope: { collections: readonly string[]; docs: readonly string[] } | null): Promise<void> {
+  if (!scope) return replaceAll({ collections: {}, docs: {} });
+  const snap = snapshotAll();
+  for (const c of scope.collections) delete snap.collections[c];
+  for (const d of scope.docs) delete snap.docs[d];
+  await replaceAll(snap);
 }

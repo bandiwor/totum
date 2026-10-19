@@ -21,6 +21,8 @@ export interface AppSettings {
   tabOrder: string[];
   /** UI language: a built-in id (ru, en) or the id of a custom language. */
   language: string;
+  /** The welcome screen was completed. */
+  onboarded: boolean;
 }
 
 export const settings = defineDoc<AppSettings>('settings', {
@@ -34,4 +36,5 @@ export const settings = defineDoc<AppSettings>('settings', {
   disabledModules: [],
   tabOrder: [],
   language: 'ru',
+  onboarded: false,
 });

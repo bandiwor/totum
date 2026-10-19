@@ -13,12 +13,14 @@ import { markRoot } from './core/router';
 import { loadAll } from './core/store/store';
 import { t } from './core/i18n';
 import { installLanguage } from './core/i18n/languages';
+import { skipOnboardingIfUsed } from './features/onboarding/Onboarding';
 
 async function boot(): Promise<void> {
   installNativeFeel();
   registerFeatures(FEATURES);
   await loadAll();
   runReadyHooks();
+  skipOnboardingIfUsed();
   installLanguage();
   installTheme();
   markRoot();

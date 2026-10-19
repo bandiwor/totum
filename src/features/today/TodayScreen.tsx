@@ -9,7 +9,6 @@ import { selectDate, selectedDate } from './selectedDate';
 import { TimelineWidget } from './TimelineWidget';
 import { useDayTimeline } from './useDayTimeline';
 import { t } from '@/core/i18n';
-import { registeredCollections } from '@/core/store/store';
 
 function openDayActions(date: ISODate): void {
   openSheet(
@@ -62,8 +61,6 @@ export function TodayScreen() {
   const date = selectedDate.value;
   const widgets = registry.todayWidgets();
   const nothingSetUp = timetables.all.value.length === 0 && jobs.all.value.length === 0;
-  // A fresh install has no categories at all — point to the packs.
-  const emptyApp = registeredCollections().every((c) => c.snapshot().length === 0);
   const hasOpenItems = (d: ISODate): boolean => registry.agenda(d).some((a) => !a.done) || registry.busyBlocks(d).length > 0;
 
   return (
@@ -74,15 +71,6 @@ export function TodayScreen() {
       toolbar={<DateStrip value={date} onChange={selectDate} marks={hasOpenItems} />}
     >
       {date === today() || <p class="today__date">{formatWeekday(date, 'long')}, {formatDayMonth(date)}</p>}
-
-      {emptyApp && (
-        <Section>
-          <Card onClick={() => navigate('settings/packs')}>
-            <p class="today__setup-title">{t('today.packsTitle')}</p>
-            <p class="today__setup-text">{t('today.packsText')}</p>
-          </Card>
-        </Section>
-      )}
 
       <Section>
         <FreeTimeCard date={date} />
