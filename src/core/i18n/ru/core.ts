@@ -67,4 +67,6 @@ export const collections = {
   transactions: 'Операции',
   recurring: 'Регулярные платежи',
   goals: 'Цели накоплений',
+  noteCollections: 'Коллекции записей',
+  notes: 'Записи',
 } as const;

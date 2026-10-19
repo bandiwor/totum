@@ -32,9 +32,6 @@ export const common = {
   note: 'Заметка',
   remove: 'Убрать',
   great: 'Отлично',
-  stage: 'Этап {n}',
-  comingSoon: 'Появится на этапе {n}',
-  comingSoonText: 'Кнопка уже на своём месте, логика подключится вместе с разделом.',
 } as const;
 
 export const time = {

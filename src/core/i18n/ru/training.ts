@@ -171,12 +171,3 @@ export const training = {
   periods: { '1m': '1 мес', '3m': '3 мес', '6m': '6 мес', all: 'Всё' },
   defaultCategories: { chest: 'Грудь', back: 'Спина', legs: 'Ноги', shoulders: 'Плечи', arms: 'Руки', core: 'Пресс', cardio: 'Кардио' },
 } as const;
-
-export const stubs = {
-  notes: {
-    title: 'Записи',
-    all: 'Все',
-    allText: 'Коллекции (дневник, книги, духи…) со своими полями, поиск и «вернуться к этому».',
-    note: 'Заметка',
-  },
-} as const;
