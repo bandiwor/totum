@@ -12,7 +12,7 @@ const AREAS: readonly { id: string; label: PlainKey; icon: IconName; collections
     id: 'plan',
     label: 'reset.areas.plan',
     icon: 'calendar',
-    collections: ['places', 'routes', 'subjects', 'lessonTypes', 'timetables', 'lessonOverrides', 'tasks', 'jobs', 'shiftOverrides'],
+    collections: ['places', 'routes', 'teachers', 'subjects', 'lessonTypes', 'timetables', 'lessonOverrides', 'tasks', 'jobs', 'shiftOverrides'],
     docs: ['bells'],
   },
   {

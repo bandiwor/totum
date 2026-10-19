@@ -19,7 +19,8 @@ import {
   TextField,
   type ColorKey,
 } from '@/ui';
-import { subjects, timetables, type Subject } from './model';
+import { subjects, teachers, timetables, type Subject } from './model';
+import { TeacherPicker } from './TeachersScreen';
 import { t } from '@/core/i18n';
 
 function isUsed(id: string): boolean {
@@ -29,13 +30,13 @@ function isUsed(id: string): boolean {
 function SubjectForm({ subject, close }: { subject: Subject | null; close: () => void }) {
   const [name, setName] = useState(subject?.name ?? '');
   const [color, setColor] = useState(subject?.color ?? (`c${(subjects.all.value.length % 8) + 1}` as ColorKey));
-  const [teacher, setTeacher] = useState(subject?.teacher ?? '');
+  const [teacherId, setTeacherId] = useState(subject?.teacherId ?? null);
   const [room, setRoom] = useState(subject?.room ?? '');
   const [placeId, setPlaceId] = useState(subject?.placeId ?? null);
   const [archived, setArchived] = useState(subject?.archived ?? false);
 
   const save = (): void => {
-    const data = { name: name.trim(), color, teacher: teacher.trim(), room: room.trim(), placeId, archived };
+    const data = { name: name.trim(), color, teacherId, room: room.trim(), placeId, archived };
     if (!data.name) return;
     if (subject) subjects.update(subject.id, data);
     else subjects.add(data);
@@ -61,7 +62,9 @@ function SubjectForm({ subject, close }: { subject: Subject | null; close: () =>
       <Field label={t('common.color')}>
         <ColorPicker value={color} onChange={setColor} />
       </Field>
-      <TextField label={t('schedule.teacher')} value={teacher} onValue={setTeacher} placeholder={t('schedule.teacherPlaceholder')} />
+      <Field label={t('schedule.teacher')} hint={t('schedule.teacherHint')}>
+        <TeacherPicker value={teacherId} onChange={setTeacherId} noneLabel={t('schedule.teacherNone')} />
+      </Field>
       <TextField label={t('schedule.room')} value={room} onValue={setRoom} placeholder={t('schedule.roomPlaceholder')} />
       <Field label={t('schedule.building')} hint={t('schedule.buildingHint')}>
         <PlacePicker value={placeId} onChange={setPlaceId} />
@@ -103,7 +106,7 @@ export function SubjectsScreen() {
                 key={s.id}
                 leading={<span class="color-dot" style={{ background: colorVar(s.color), opacity: s.archived ? 0.4 : 1 }} />}
                 title={s.archived ? t('common.archivedSuffix', { name: s.name }) : s.name}
-                {...([s.teacher, s.room].filter(Boolean).length ? { subtitle: [s.teacher, s.room].filter(Boolean).join(' · ') } : {})}
+                {...([teachers.get(s.teacherId ?? '')?.name, s.room].filter(Boolean).length ? { subtitle: [teachers.get(s.teacherId ?? '')?.name, s.room].filter(Boolean).join(' · ') } : {})}
                 chevron
                 onClick={() => openSubjectForm(s)}
               />

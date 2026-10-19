@@ -19,6 +19,7 @@ export function dayTimeline(date: ISODate): DayTimeline {
     homeId: homeId.value,
     minHomeStay: s.minHomeStay,
     travel: travelMinutes,
+    arriveEarly: s.arriveEarly,
   });
   return { segments, free: summarizeFreeTime(segments) };
 }

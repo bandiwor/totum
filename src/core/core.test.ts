@@ -111,6 +111,23 @@ describe('timeline', () => {
     expect(segs.some((s) => s.kind === 'travel' && s.from === 'uni' && s.to === 'home')).toBe(false);
   });
 
+  it('leaves earlier by the arrive-early buffer', () => {
+    const segs = buildTimeline([block('p1', '09:00', '10:30', 'uni')], { ...opts, arriveEarly: 10 });
+    expect(segs.find((s) => s.kind === 'travel' && s.to === 'uni')).toMatchObject({ start: parseTime('08:10'), end: parseTime('08:50'), late: 0 });
+  });
+
+  it('a night shift: evening part has no trip home, morning part starts already there', () => {
+    const routes2 = { ...routes, 'home>cafe': 30, 'cafe>home': 30 };
+    const o = { ...opts, travel: (a: string, b: string) => routes2[`${a}>${b}` as keyof typeof routes2] };
+    const evening = buildTimeline([{ ...block('n', '22:00', '24:00', 'cafe'), continues: true }], o);
+    expect(evening.at(-1)).toMatchObject({ kind: 'busy' });
+    expect(evening.filter((s) => s.kind === 'travel')).toHaveLength(1);
+    const morning = buildTimeline([{ ...block('n', '00:00', '06:00', 'cafe'), continued: true }], o);
+    expect(morning.map((s) => s.kind)).toEqual(['busy', 'travel', 'free']);
+    expect(morning[1]).toMatchObject({ from: 'cafe', to: 'home', start: parseTime('06:00') });
+    expect(morning[2]).toMatchObject({ start: parseTime('07:00') });
+  });
+
   it('flags lateness when the gap is too short', () => {
     const segs = buildTimeline([block('p1', '09:00', '10:30', 'uni'), block('p2', '10:35', '11:00', 'gym')], opts);
     const t = segs.find((s) => s.kind === 'travel' && s.to === 'gym');

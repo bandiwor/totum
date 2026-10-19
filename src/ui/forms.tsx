@@ -157,20 +157,28 @@ export function TimeRange({
   start,
   end,
   onChange,
+  overnight,
 }: {
   start: Minutes;
   end: Minutes;
   onChange: (start: Minutes, end: Minutes) => void;
+  /** An end at or before the start means the next day; `end` then goes past 1440. */
+  overnight?: boolean;
 }) {
+  const nextDay = end > 1440 || (overnight === true && end === 1440 && start > 0);
   return (
     <div class="ui-row2">
       <TimeField
         label={t('common.start')}
         value={start}
         // Moving the start keeps the duration.
-        onChange={(s) => onChange(s, Math.min(1440, s + (end - start)))}
+        onChange={(s) => onChange(s, Math.min(overnight ? 2 * 1440 : 1440, s + (end - start)))}
       />
-      <TimeField label={t('common.end')} value={end} onChange={(e) => onChange(start, Math.max(e, start + 5))} />
+      <TimeField
+        label={nextDay ? t('time.endNextDay') : t('common.end')}
+        value={end % 1440}
+        onChange={(e) => onChange(start, overnight && e <= start ? e + 1440 : Math.max(e, start + 5))}
+      />
     </div>
   );
 }

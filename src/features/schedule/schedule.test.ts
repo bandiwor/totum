@@ -9,10 +9,10 @@ import { lessonOverrides, lessonsFor, cancelledLessonsFor, nextLessonOf, subject
 const d = toISODate;
 registerFeatures([{ id: 'schedule', busySources: [{ id: 'schedule', blocksFor: lessonBlocks, cancelledFor: cancelledLessonBlocks }] }]);
 
-const math = subjects.add({ name: 'Матан', color: 'c1', teacher: '', room: '101', placeId: null, archived: false });
-const phys = subjects.add({ name: 'Физика', color: 'c2', teacher: '', room: '', placeId: null, archived: false });
+const math = subjects.add({ name: 'Матан', color: 'c1', teacherId: null, room: '101', placeId: null, archived: false });
+const phys = subjects.add({ name: 'Физика', color: 'c2', teacherId: null, room: '', placeId: null, archived: false });
 const lesson = (id: string, subjectId: string, start: number): TemplateLesson => ({
-  id, subjectId, typeId: null, start, end: start + 90, bell: null, room: null, placeId: null, online: false,
+  id, subjectId, typeId: null, start, end: start + 90, bell: null, room: null, placeId: null, teacherId: null, online: false,
 });
 
 // Two-week cycle starting Monday 2026-09-07: math on Mon of week 1, physics on Mon of week 2.
@@ -62,6 +62,6 @@ describe('timetable resolution', () => {
     subjects.update(math.id, { placeId: uni.id });
     const t = dayTimeline(d('2026-10-19'));
     expect(t.free.travel).toBe(60);
-    expect(t.segments.find((s) => s.kind === 'travel')?.start).toBe(480);
+    expect(t.segments.find((s) => s.kind === 'travel')?.start).toBe(480 - 5) // arrive 5 min early by default;
   });
 });

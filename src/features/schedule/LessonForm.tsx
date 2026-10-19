@@ -2,8 +2,11 @@ import { useState } from 'preact/hooks';
 import { formatTime } from '@/core/date';
 import { haptic } from '@/core/haptics';
 import { navigate } from '@/core/router';
-import { Button, ChoiceChips, colorVar, EmptyState, Field, Form, List, ListRow, SheetActions, Switch, TextField, TimeRange } from '@/ui';
-import { activeSubjects, bells, sortedLessonTypes, subjects, type LessonData } from './model';
+import { Button, ChoiceChips, colorVar, EmptyState, Field, Form, List, ListRow, SegmentedControl, SheetActions, Switch, TextField, TimeRange } from '@/ui';
+import { activeSubjects, bells, sortedLessonTypes, subjects, teachers, type LessonData } from './model';
+import { TeacherPicker } from './TeachersScreen';
+import { PlacePicker } from '@/features/places/PlacePicker';
+import { places } from '@/features/places/model';
 import { t } from '@/core/i18n';
 
 export function defaultLesson(): LessonData {
@@ -16,6 +19,7 @@ export function defaultLesson(): LessonData {
     bell: first?.n ?? null,
     room: null,
     placeId: null,
+    teacherId: null,
     online: false,
   };
 }
@@ -38,6 +42,8 @@ export function LessonForm({
   const patch = (p: Partial<LessonData>): void => setD((cur) => ({ ...cur, ...p }));
   const slots = bells.value.value.slots;
   const subject = subjects.get(d.subjectId);
+  const inheritedTeacher = teachers.byId(subject?.teacherId);
+  const inheritedPlace = places.byId(subject?.placeId);
   const subjectOptions = activeSubjects.value.map((s) => ({ value: s.id, label: s.name, color: colorVar(s.color) }));
 
   if (subjectOptions.length === 0) {
@@ -74,24 +80,58 @@ export function LessonForm({
         />
       </Field>
       {slots.length > 0 && (
+        <SegmentedControl
+          options={[
+            { value: 'bells', label: t('schedule.byBells') },
+            { value: 'custom', label: t('schedule.customTime') },
+          ]}
+          value={d.bell === null ? 'custom' : 'bells'}
+          onChange={(mode) => {
+            const slot = slots.find((s) => s.start === d.start) ?? slots[0];
+            patch(mode === 'custom' ? { bell: null } : slot ? { bell: slot.n, start: slot.start, end: slot.end } : {});
+          }}
+        />
+      )}
+      {slots.length > 0 && d.bell !== null && (
         <Field label={t('schedule.pairNumber')}>
           <ChoiceChips
-            options={[...slots.map((s) => ({ value: s.n, label: t('schedule.bellOption', { n: s.n, time: formatTime(s.start) }) })), { value: 0, label: t('schedule.customTime') }]}
-            value={d.bell ?? 0}
+            options={slots.map((s) => ({ value: s.n, label: t('schedule.bellOption', { n: s.n, time: formatTime(s.start) }) }))}
+            value={d.bell}
             onChange={(n) => {
               const slot = slots.find((s) => s.n === n);
-              patch(slot ? { bell: slot.n, start: slot.start, end: slot.end } : { bell: null });
+              if (slot) patch({ bell: slot.n, start: slot.start, end: slot.end });
             }}
           />
         </Field>
       )}
-      {(slots.length === 0 || d.bell === null) && <TimeRange start={d.start} end={d.end} onChange={(start, end) => patch({ start, end })} />}
+      {(slots.length === 0 || d.bell === null) && (
+        <>
+          <TimeRange start={d.start} end={d.end} onChange={(start, end) => patch({ start, end })} />
+          <p class="sheet-note">{t('schedule.customTimeHint')}</p>
+        </>
+      )}
       <TextField
         label={t('schedule.room')}
         value={d.room ?? ''}
         placeholder={subject?.room ? t('schedule.roomInherited', { room: subject.room }) : t('schedule.roomNone')}
         onValue={(room) => patch({ room: room.trim() ? room : null })}
       />
+      <Field label={t('schedule.teacher')}>
+        <TeacherPicker
+          value={d.teacherId ?? null}
+          onChange={(teacherId) => patch({ teacherId })}
+          noneLabel={inheritedTeacher ? t('schedule.teacherInherited', { name: inheritedTeacher.name }) : t('schedule.teacherNone')}
+        />
+      </Field>
+      {!d.online && (
+        <Field label={t('schedule.building')}>
+          <PlacePicker
+            value={d.placeId}
+            onChange={(placeId) => patch({ placeId })}
+            noneLabel={inheritedPlace ? t('schedule.placeInherited', { name: inheritedPlace.name }) : t('places.none')}
+          />
+        </Field>
+      )}
       <List>
         <ListRow title={t('schedule.online')} subtitle={t('schedule.noTravel')} trailing={<Switch label={t('schedule.online')} checked={d.online} onChange={(online) => patch({ online })} />} />
       </List>

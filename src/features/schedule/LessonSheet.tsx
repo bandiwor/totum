@@ -52,7 +52,7 @@ function LessonDetails({ date, lessonKey, close }: { date: ISODate; lessonKey: s
       </div>
 
       <List>
-        {lesson.subject?.teacher && <ListRow icon="notes" title={lesson.subject.teacher} subtitle={t('schedule.teacher')} />}
+        {lesson.teacher && <ListRow icon="notes" title={lesson.teacher.name} subtitle={lesson.teacher.position || t('schedule.teacher')} />}
         {(lesson.room || place) && <ListRow icon="pin" title={[lesson.room, place].filter(Boolean).join(' · ')} subtitle={t('common.where')} />}
       </List>
 

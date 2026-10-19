@@ -1,4 +1,5 @@
-import { formatDuration, formatTime, nowMinutes, today } from '@/core/date';
+import { formatDuration, formatTime, minuteTick, nowMinutes, today } from '@/core/date';
+import { LeaveCard } from '@/features/today/LeaveCard';
 import { registry, type AgendaItem } from '@/core/registry';
 import type { TimelineSegment } from '@/core/timeline';
 import { places } from '@/features/places/model';
@@ -80,12 +81,14 @@ export function BriefScreen() {
     .slice(0, 7);
   const untimed = agenda.filter((a) => a.time === null).map(fromAgenda);
 
+  void minuteTick.value;
   if (timed.length === 0 && untimed.length === 0) {
     return <EmptyState icon="sparkles" title={t('quick.allDone')} text={t('quick.allDoneText')} />;
   }
 
   return (
     <div class="brief">
+      <LeaveCard />
       {timed.map((l) => (
         <div key={l.key} class={`brief__line is-${l.tone}`}>
           <span class="brief__time num">{l.time}</span>

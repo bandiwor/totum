@@ -18,6 +18,10 @@ export interface BusyBlock {
   color?: string;
   /** Short marker, e.g. "ДЗ 2". */
   badge?: string;
+  /** Started the day before (night shift after midnight): you're already there. */
+  continued?: boolean;
+  /** Goes on past midnight: no trip home after it today. */
+  continues?: boolean;
 }
 
 export type TimelineSegment =
@@ -45,6 +49,8 @@ export interface TimelineOptions {
   minHomeStay: Minutes;
   /** Travel time between two places; `undefined` when unknown (treated as 0). */
   travel: (from: string, to: string) => Minutes | undefined;
+  /** Arrive this many minutes before a block that needs a trip. */
+  arriveEarly?: Minutes;
 }
 
 /**
@@ -55,8 +61,11 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
   const sorted = blocks.filter((b) => b.end > b.start).sort((a, b) => a.start - b.start || a.end - b.end);
   const segments: TimelineSegment[] = [];
   const home = o.homeId;
-  let cursor = o.dayStart;
+  const early = o.arriveEarly ?? 0;
+  // A block carried over from yesterday may start before the awake window.
+  let cursor = Math.min(o.dayStart, sorted[0]?.start ?? o.dayStart);
   let location: string | null = home;
+  let carriesOn = false;
 
   const trip = (from: string | null, to: string | null): Minutes =>
     from === null || to === null || from === to ? 0 : (o.travel(from, to) ?? 0);
@@ -84,6 +93,14 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
 
   for (const block of sorted) {
     const target = block.placeId ?? location;
+    carriesOn = block.continues === true;
+
+    if (block.continued) {
+      segments.push({ kind: 'busy', start: block.start, end: block.end, block, overlaps: false });
+      cursor = Math.max(cursor, block.end);
+      location = target;
+      continue;
+    }
 
     if (block.start < cursor) {
       segments.push({ kind: 'busy', start: block.start, end: block.end, block, overlaps: true });
@@ -98,13 +115,16 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
     const toHome = canGoHome ? trip(location, home) : 0;
     const fromHome = canGoHome ? trip(home, target) : 0;
 
-    if (canGoHome && gap - toHome - fromHome >= o.minHomeStay) {
+    const needsTrip = (from: string | null, to: string | null): boolean => from !== null && to !== null && from !== to;
+    const homeEarly = needsTrip(home, target) ? early : 0;
+
+    if (canGoHome && gap - toHome - fromHome - homeEarly >= o.minHomeStay) {
       const arrived = travel(location, home, cursor, toHome, block.start);
-      free(arrived, block.start - fromHome, home);
-      travel(home, target, block.start - fromHome, fromHome, block.start);
+      free(arrived, block.start - fromHome - homeEarly, home);
+      travel(home, target, block.start - fromHome - homeEarly, fromHome, block.start);
     } else {
       const direct = trip(location, target);
-      const leaveAt = Math.max(cursor, block.start - direct);
+      const leaveAt = Math.max(cursor, block.start - direct - (needsTrip(location, target) ? early : 0));
       free(cursor, leaveAt, location);
       travel(location, target, leaveAt, direct, block.start);
     }
@@ -114,6 +134,8 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
     location = target;
   }
 
+  // After a block running past midnight you're still there: no trip home, no free time.
+  if (carriesOn) return segments;
   if (location !== home) cursor = travel(location, home, cursor, trip(location, home), o.dayEnd);
   free(cursor, o.dayEnd, home);
   return segments;

@@ -1,7 +1,8 @@
 import * as v from 'valibot';
 import { computed } from '@preact/signals';
 import { cycleDay, type Cycle } from '@/core/cycle';
-import type { ISODate, Minutes } from '@/core/date';
+import { formatTime, type ISODate, type Minutes } from '@/core/date';
+import { t } from '@/core/i18n';
 import { resolveDay } from '@/core/plan';
 import { defineOverrides } from '@/core/store/overrides';
 import { cycleSchema, entityFields, minutes } from '@/core/store/schema';
@@ -10,6 +11,7 @@ import { defineCollection, type Entity } from '@/core/store/store';
 export interface ShiftData {
   jobId: string;
   start: Minutes;
+  /** Past 1440 = ends the next day (night shift): 22:00–06:00 is 1320–1800. */
   end: Minutes;
 }
 
@@ -31,7 +33,7 @@ export interface Job extends Entity {
   cycle: Cycle<TemplateShift[]> | null;
 }
 
-const shiftEntries = { jobId: v.string(), start: minutes, end: minutes };
+const shiftEntries = { jobId: v.string(), start: minutes, end: v.pipe(v.number(), v.minValue(0), v.maxValue(2 * 1440)) };
 
 export const jobs = defineCollection<Job>('jobs', {
   label: 'collections.jobs',
@@ -71,3 +73,9 @@ export function shiftsFor(date: ISODate): Shift[] {
 }
 
 export const PAY_TYPES: readonly PayType[] = ['hour', 'shift', 'month'];
+
+/** "22:00–06:00 (+1)" for shifts that end the next day. */
+export function shiftRange(start: Minutes, end: Minutes): string {
+  const range = t('time.range', { from: formatTime(start), to: formatTime(end % 1440) });
+  return end > 1440 ? t('work.nextDayRange', { range }) : range;
+}

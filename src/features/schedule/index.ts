@@ -3,6 +3,7 @@ import { BellsScreen } from './BellsScreen';
 import { cancelledLessonBlocks, lessonBlocks } from './busy';
 import { openAddLesson, openLessonSheet } from './LessonSheet';
 import { SubjectsScreen } from './SubjectsScreen';
+import { TeachersScreen } from './TeachersScreen';
 import { TimetableDayEditor, TimetableEditor, TimetablesScreen } from './TimetablesScreen';
 import { TypesScreen } from './TypesScreen';
 
@@ -11,6 +12,7 @@ export const scheduleFeature: FeatureDef = {
   module: 'schedule',
   routes: [
     { pattern: 'plan/subjects', component: SubjectsScreen },
+    { pattern: 'plan/teachers', component: TeachersScreen },
     { pattern: 'plan/types', component: TypesScreen },
     { pattern: 'plan/bells', component: BellsScreen },
     { pattern: 'plan/timetables', component: TimetablesScreen },

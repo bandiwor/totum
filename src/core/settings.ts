@@ -15,6 +15,8 @@ export interface AppSettings {
   dayEnd: Minutes;
   /** Go home between commitments only if the stay is at least this long. */
   minHomeStay: Minutes;
+  /** Arrive this many minutes early wherever you need to travel. */
+  arriveEarly: Minutes;
   /** Turned-off modules (see core/modules.ts). */
   disabledModules: string[];
   /** Tab paths in the user's order. Empty = default order. */
@@ -33,6 +35,7 @@ export const settings = defineDoc<AppSettings>('settings', {
   dayStart: 7 * 60 + 30,
   dayEnd: 23 * 60 + 30,
   minHomeStay: 40,
+  arriveEarly: 5,
   disabledModules: [],
   tabOrder: [],
   language: 'ru',

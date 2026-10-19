@@ -6,7 +6,7 @@ import type { DataSnapshot } from './store';
  * stored data changes. Old backups are migrated step by step on import, and the
  * local database is migrated on boot.
  */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 type Migration = (data: DataSnapshot) => DataSnapshot;
 
@@ -34,6 +34,26 @@ const migrations: Migration[] = [
       return [{ id: e.id, createdAt: e.createdAt, updatedAt: e.updatedAt, plannedBed: e.plannedBed, plannedWake: e.plannedWake, bedAt: bed, asleepAt: evening(e.asleepAt), wakeAt: e.wakeAt === null ? null : at(e.date, e.wakeAt) }];
     });
     return { ...data, collections: { ...data.collections, sleepLog } };
+  },
+  // 2 → 3: a subject's teacher was free text; teachers are now a list (with a position).
+  (data) => {
+    const subjects = data.collections.subjects;
+    if (!subjects) return data;
+    const teachers: { id: string; createdAt: number; updatedAt: number; name: string; position: string }[] = [];
+    const byName = new Map<string, string>();
+    const migrated = subjects.map((raw) => {
+      const { teacher, ...rest } = raw as { teacher?: string; createdAt: number } & Record<string, unknown>;
+      const name = (teacher ?? '').trim();
+      if (!name) return { ...rest, teacherId: null };
+      let id = byName.get(name.toLowerCase());
+      if (!id) {
+        id = `tch-${teachers.length + 1}-${Date.now().toString(36)}`;
+        byName.set(name.toLowerCase(), id);
+        teachers.push({ id, createdAt: rest.createdAt, updatedAt: rest.createdAt, name, position: '' });
+      }
+      return { ...rest, teacherId: id };
+    });
+    return { ...data, collections: { ...data.collections, subjects: migrated, teachers: [...(data.collections.teachers ?? []), ...teachers] } };
   },
 ];
 

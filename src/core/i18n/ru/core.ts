@@ -43,6 +43,7 @@ export const app = {
 
 /** Collection names shown in the import summary. */
 export const collections = {
+  teachers: 'Преподаватели',
   places: 'Места',
   routes: 'Дорога между местами',
   subjects: 'Предметы',

@@ -36,6 +36,7 @@ export const common = {
 } as const;
 
 export const time = {
+  endNextDay: 'Конец (+1 день)',
   prevMonth: 'Предыдущий месяц',
   nextMonth: 'Следующий месяц',
   pickDate: 'Дата',

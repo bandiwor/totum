@@ -1543,3 +1543,60 @@
   border-top: 1px solid var(--border);
   background: var(--bg);
 }
+
+/* ── "Time to leave" ── */
+.leave-card {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  animation: leave-in 420ms var(--ease-enter) both;
+}
+@keyframes leave-in {
+  from { opacity: 0; transform: translateY(-6px); }
+}
+.leave-card__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.leave-card.is-due {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.leave-card.is-due .leave-card__icon {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  animation: leave-pulse 1.8s var(--ease-in-out) infinite;
+}
+@keyframes leave-pulse {
+  50% { transform: scale(1.08); }
+}
+.leave-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.leave-card__title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+.leave-card__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.leave-card__late {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--danger);
+}

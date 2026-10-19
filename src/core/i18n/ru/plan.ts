@@ -1,4 +1,6 @@
 export const plan = {
+  teachers: 'Преподаватели',
+  teachersCount: { one: '{count} преподаватель', few: '{count} преподавателя', many: '{count} преподавателей', other: '{count} преподавателя' },
   title: 'План',
   tabs: { week: 'Неделя', tasks: 'Задачи', setup: 'Настройка' },
   newTask: 'Новая задача',
@@ -23,6 +25,8 @@ export const plan = {
   wake: 'Подъём',
   sleep: 'Отбой',
   minHomeStay: 'Ехать домой, если там пробуду не меньше',
+  arriveEarly: 'Приходить заранее',
+  arriveEarlyHint: 'Выход в дорогу считается так, чтобы быть на месте за столько минут до начала.',
   minHomeStayHint: 'Иначе в перерыве остаёшься на месте или едешь сразу к следующему делу.',
   weekRange: '{from} — {to}',
   freeWeek: 'Свободно за неделю',
@@ -31,6 +35,22 @@ export const plan = {
 } as const;
 
 export const schedule = {
+  teachers: 'Преподаватели',
+  teacherName: 'ФИО',
+  position: 'Должность',
+  positionPlaceholder: 'Доцент, ст. преподаватель…',
+  positionNone: 'Должность не указана',
+  newTeacher: 'Новый преподаватель',
+  addTeacherChip: '+ Новый',
+  noTeachers: 'Преподавателей пока нет',
+  noTeachersText: 'Добавь их здесь или прямо из предмета. У пары можно указать другого преподавателя — например, лабы ведёт не лектор.',
+  deleteTeacherText: 'Из предметов и пар он уберётся, сами пары останутся.',
+  teacherHint: 'Ведёт по умолчанию. У отдельной пары можно выбрать другого.',
+  teacherNone: 'Не указан',
+  teacherInherited: 'Как у предмета: {name}',
+  placeInherited: 'Как у предмета: {name}',
+  byBells: 'По звонкам',
+  customTimeHint: 'Для пар не по сетке звонков — например, военная кафедра 7:40–15:55.',
   lesson: 'Пара',
   lessonN: '{n} пара',
   newLesson: 'Новая пара',
@@ -152,6 +172,9 @@ export const tasks = {
 } as const;
 
 export const work = {
+  sinceYesterday: 'смена с {time} вчера',
+  untilTomorrow: 'смена до {time} завтра',
+  nextDayRange: '{range} (+1)',
   work: 'Работа',
   newJob: 'Новая',
   noJobs: 'Работы нет',

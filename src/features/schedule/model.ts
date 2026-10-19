@@ -7,12 +7,26 @@ import { defineOverrides } from '@/core/store/overrides';
 import { cycleSchema, entityFields, isoDate, minutes } from '@/core/store/schema';
 import { defineCollection, defineDoc, type Entity } from '@/core/store/store';
 
-// ── Subjects & lesson types ────────────────────────────────────────────────
+// ── Teachers, subjects & lesson types ──────────────────────────────────────
+
+export interface Teacher extends Entity {
+  name: string;
+  /** Position / title: «доцент», «старший преподаватель»… */
+  position: string;
+}
+
+export const teachers = defineCollection<Teacher>('teachers', {
+  label: 'collections.teachers',
+  schema: v.object({ ...entityFields, name: v.pipe(v.string(), v.minLength(1)), position: v.string() }),
+});
+
+export const sortedTeachers = computed(() => [...teachers.all.value].sort((a, b) => a.name.localeCompare(b.name, 'ru')));
 
 export interface Subject extends Entity {
   name: string;
   color: string;
-  teacher: string;
+  /** Default teacher; a lesson may name another one (e.g. labs by a different person). */
+  teacherId: string | null;
   room: string;
   /** Building / campus as a Place (for travel). `null` = no travel. */
   placeId: string | null;
@@ -25,7 +39,7 @@ export const subjects = defineCollection<Subject>('subjects', {
     ...entityFields,
     name: v.string(),
     color: v.string(),
-    teacher: v.string(),
+    teacherId: v.nullable(v.string()),
     room: v.string(),
     placeId: v.nullable(v.string()),
     archived: v.boolean(),
@@ -84,6 +98,7 @@ export interface LessonData {
   /** Overrides of the subject defaults; `null` = inherit. */
   room: string | null;
   placeId: string | null;
+  teacherId: string | null;
   /** Online: no travel. */
   online: boolean;
 }
@@ -108,6 +123,8 @@ const lessonEntries = {
   bell: v.nullable(v.number()),
   room: v.nullable(v.string()),
   placeId: v.nullable(v.string()),
+  // Optional: lessons saved before teachers existed have no such field.
+  teacherId: v.optional(v.nullable(v.string()), null),
   online: v.boolean(),
 };
 
@@ -146,6 +163,7 @@ export interface Lesson {
   /** Effective place (`null` = no travel). */
   placeId: string | null;
   room: string;
+  teacher: Teacher | undefined;
   origin: 'template' | 'added';
   modified: boolean;
 }
@@ -160,6 +178,7 @@ function toLesson(date: ISODate, key: string, data: LessonData, origin: Lesson['
     type: data.typeId ? lessonTypes.get(data.typeId) : undefined,
     placeId: data.online ? null : (data.placeId ?? subject?.placeId ?? null),
     room: data.room ?? subject?.room ?? '',
+    teacher: teachers.byId(data.teacherId ?? subject?.teacherId),
     origin,
     modified,
   };

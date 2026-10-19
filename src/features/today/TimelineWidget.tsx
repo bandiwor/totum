@@ -1,4 +1,4 @@
-import { formatDuration, formatTime, nowMinutes, today, type ISODate } from '@/core/date';
+import { formatDuration, formatTime, minuteTick, nowMinutes, today, type ISODate } from '@/core/date';
 import { haptic } from '@/core/haptics';
 import { registry } from '@/core/registry';
 import type { BusyBlock, TimelineSegment } from '@/core/timeline';
@@ -41,6 +41,7 @@ function BlockCard({ date, block, state }: { date: ISODate; block: BusyBlock; st
 }
 
 export function TimelineWidget({ date }: { date: ISODate }) {
+  void minuteTick.value;
   const { segments } = useDayTimeline(date).value;
   const cancelled = registry.cancelledBlocks(date);
   const isToday = date === today();

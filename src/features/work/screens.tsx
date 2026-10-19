@@ -29,7 +29,7 @@ import {
   TimeRange,
   type ColorKey,
 } from '@/ui';
-import { activeJobs, jobs, PAY_TYPES, shiftOverrides, shiftsFor, type Job, type ShiftData, type TemplateShift } from './model';
+import { activeJobs, jobs, PAY_TYPES, shiftOverrides, shiftRange, shiftsFor, type Job, type ShiftData, type TemplateShift } from './model';
 import { t } from '@/core/i18n';
 
 function createJob(): void {
@@ -71,7 +71,7 @@ export function JobsScreen() {
 
 function shiftsSummary(day: TemplateShift[]): string {
   if (day.length === 0) return t('work.dayOff');
-  return [...day].sort((a, b) => a.start - b.start).map((s) => t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })).join(', ');
+  return [...day].sort((a, b) => a.start - b.start).map((s) => shiftRange(s.start, s.end)).join(', ');
 }
 
 export function JobEditor({ params }: RouteProps) {
@@ -175,7 +175,7 @@ function ShiftTimeForm({
           />
         </Field>
       )}
-      <TimeRange start={d.start} end={d.end} onChange={(start, end) => setD({ ...d, start, end })} />
+      <TimeRange overnight start={d.start} end={d.end} onChange={(start, end) => setD({ ...d, start, end })} />
       <p class="sheet-note">{t('work.durationLine', { duration: formatDuration(d.end - d.start) })}</p>
       <SheetActions>
         <Button
@@ -233,7 +233,7 @@ export function JobDayEditor({ params }: RouteProps) {
         <Section>
           <List>
             {[...day].sort((a, b) => a.start - b.start).map((s) => (
-              <ListRow key={s.id} icon="briefcase" title={t('time.range', { from: formatTime(s.start), to: formatTime(s.end) })} value={formatDuration(s.end - s.start)} onClick={() => open(s)} />
+              <ListRow key={s.id} icon="briefcase" title={shiftRange(s.start, s.end)} value={formatDuration(s.end - s.start)} onClick={() => open(s)} />
             ))}
           </List>
         </Section>
@@ -251,7 +251,7 @@ export function openShiftSheet(date: ISODate, key: string): void {
     (close) => (
       <>
         <p class="sheet-note">
-          {t('schedule.dayHeader', { day: formatRelativeDay(date), from: formatTime(shift.data.start), to: formatTime(shift.data.end) })}
+          {t('schedule.dayHeader', { day: formatRelativeDay(date), from: formatTime(shift.data.start), to: formatTime(shift.data.end % 1440) })}
           {shift.modified ? t('work.modifiedSuffix') : ''}
         </p>
         <ShiftTimeForm

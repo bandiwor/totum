@@ -1,4 +1,6 @@
 export const plan = {
+  teachers: 'Teachers',
+  teachersCount: { one: '{count} teacher', other: '{count} teachers' },
   title: 'Plan',
   tabs: { week: 'Week', tasks: 'Tasks', setup: 'Setup' },
   newTask: 'New task',
@@ -23,6 +25,8 @@ export const plan = {
   wake: 'Wake up',
   sleep: 'Bedtime',
   minHomeStay: 'Go home if I’ll stay there at least',
+  arriveEarly: 'Arrive early',
+  arriveEarlyHint: 'Departures are planned so you arrive this many minutes before the start.',
   minHomeStayHint: 'Otherwise you stay put during the break or go straight to the next thing.',
   weekRange: '{from} — {to}',
   freeWeek: 'Free this week',
@@ -31,6 +35,22 @@ export const plan = {
 };
 
 export const schedule = {
+  teachers: 'Teachers',
+  teacherName: 'Full name',
+  position: 'Position',
+  positionPlaceholder: 'Associate professor, lecturer…',
+  positionNone: 'No position',
+  newTeacher: 'New teacher',
+  addTeacherChip: '+ New',
+  noTeachers: 'No teachers yet',
+  noTeachersText: 'Add them here or right from a subject. A class can have a different teacher — e.g. labs taught by someone other than the lecturer.',
+  deleteTeacherText: 'They will be removed from subjects and classes; the classes stay.',
+  teacherHint: 'Teaches by default. A single class can have someone else.',
+  teacherNone: 'Not set',
+  teacherInherited: 'As in subject: {name}',
+  placeInherited: 'As in subject: {name}',
+  byBells: 'By bells',
+  customTimeHint: 'For classes outside the bell grid — e.g. military training 7:40–15:55.',
   lesson: 'Class',
   lessonN: 'Class {n}',
   newLesson: 'New class',
@@ -152,6 +172,9 @@ export const tasks = {
 };
 
 export const work = {
+  sinceYesterday: 'shift since {time} yesterday',
+  untilTomorrow: 'shift until {time} tomorrow',
+  nextDayRange: '{range} (+1)',
   work: 'Work',
   newJob: 'New',
   noJobs: 'No work',

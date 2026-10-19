@@ -1,3 +1,4 @@
+import { signal } from '@preact/signals';
 // Calendar dates are stored as local "YYYY-MM-DD" strings and times as minutes
 // since midnight. No Date objects in the data model → no time-zone drift.
 
@@ -160,4 +161,21 @@ export function formatRelativeDay(date: ISODate, base: ISODate = today()): strin
   if (diff === 1) return t('time.tomorrow');
   if (diff === -1) return t('time.yesterday');
   return t('time.weekdayDate', { weekday: formatWeekday(date, 'long'), date: formatDayMonth(date) });
+}
+
+/** Bumps every minute (on the minute) — read it to re-render time-dependent UI. */
+export const minuteTick = signal(0);
+
+export function startMinuteTick(): void {
+  const schedule = (): void => {
+    setTimeout(() => {
+      minuteTick.value++;
+      schedule();
+    }, 60_000 - (Date.now() % 60_000) + 50);
+  };
+  schedule();
+  // Coming back to the app after a while: catch up immediately.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') minuteTick.value++;
+  });
 }

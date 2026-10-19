@@ -43,6 +43,7 @@ export const app = {
 
 /** Collection names shown in the import summary. */
 export const collections = {
+  teachers: 'Teachers',
   places: 'Places',
   routes: 'Routes between places',
   subjects: 'Subjects',

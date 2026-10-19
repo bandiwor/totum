@@ -75,6 +75,7 @@ SETTINGS ("settings")
 - dayStart: minutes — planned wake-up time; start of the awake window (used for free-time calculation and as the sleep plan). Default 450 (7:30).
 - dayEnd: minutes — planned bedtime ("lights out"); end of the awake window and the sleep plan. Default 1410 (23:30).
 - minHomeStay: minutes — go home between commitments only if I can stay home at least this long. Default 40.
+- arriveEarly: minutes — arrive this many minutes early wherever travel is needed (departure times include it). Default 5.
 - disabledModules: string[] — modules to HIDE (their data is kept). Module ids: "schedule" (university timetable), "work", "training", "nutrition", "water", "intake" (supplements/medications), "body" (weight & body profile), "sleep", "money", "notes". This list replaces the current one, so list every module that should be off; [] = all on.
 - tabOrder: string[] — bottom tab order by path: "today", "plan", "health", "money", "notes". [] = default order. Give all paths when setting it.
 - language: "ru" | "en" | the id of a custom language from the "languages" collection.
@@ -106,11 +107,16 @@ collection "lessonTypes" — kinds of classes (lecture, practice, lab, seminar�
 - color: "c1".."c8"
 - order: number
 
+collection "teachers"
+- id
+- name: string — full name
+- position: string — position / title ("Associate professor", "Senior lecturer"…; "" if unknown)
+
 collection "subjects"
 - id
 - name: string
 - color: "c1".."c8"
-- teacher: string ("" if unknown)
+- teacherId: teacher id | null — the default teacher (null if unknown)
 - room: string — default room ("" if unknown)
 - placeId: place id | null — default building/campus (for travel); null = no travel
 - archived: boolean — false
@@ -132,7 +138,9 @@ collection "timetables" — one per semester/term; on a date the latest timetabl
   - bell: number | null — bell period number the time came from (n in bells); null = custom time
   - room: string | null — overrides the subject's room for this lesson; null = inherit
   - placeId: place id | null — overrides the subject's place; null = inherit
+  - teacherId: teacher id | null — overrides the subject's teacher (e.g. labs taught by someone else); null = inherit
   - online: boolean — true = online class, no travel
+  A class outside the bell grid (e.g. a whole-day military training block 7:40–15:55) is a lesson with bell null and its own start/end.
 (collection "lessonOverrides" holds one-off per-date changes — do not generate it.)
 
 =====================================================================
@@ -165,7 +173,7 @@ collection "jobs"
 - cycle: Cycle<Shift[]> | null — regular shifts; null = only one-off shifts. Shift =
   - id: string — unique within the job
   - jobId: the id of THIS job
-  - start: minutes; end: minutes
+  - start: minutes; end: minutes — for a night shift that ends the next day, end = next-day time + 1440 (22:00–06:00 → start 1320, end 1800); max 2880
 (collection "shiftOverrides" holds per-date changes — do not generate it.)
 
 =====================================================================
@@ -404,25 +412,29 @@ EXAMPLE (compact; realistic cross-references)
       { "id": "lt-lec", "name": "Lecture", "short": "Lec", "color": "c1", "order": 0 },
       { "id": "lt-pr", "name": "Practice", "short": "Pr", "color": "c2", "order": 1 }
     ],
+    "teachers": [
+      { "id": "tch-ivanova", "name": "Ivanova A. P.", "position": "Associate professor" },
+      { "id": "tch-smirnov", "name": "Smirnov D. V.", "position": "Senior lecturer" }
+    ],
     "subjects": [
-      { "id": "sub-calc", "name": "Calculus", "color": "c5", "teacher": "Ivanova A. P.", "room": "301", "placeId": "pl-main", "archived": false },
-      { "id": "sub-prog", "name": "Programming", "color": "c7", "teacher": "Smirnov D. V.", "room": "Lab 2", "placeId": "pl-main", "archived": false }
+      { "id": "sub-calc", "name": "Calculus", "color": "c5", "teacherId": "tch-ivanova", "room": "301", "placeId": "pl-main", "archived": false },
+      { "id": "sub-prog", "name": "Programming", "color": "c7", "teacherId": "tch-smirnov", "room": "Lab 2", "placeId": "pl-main", "archived": false }
     ],
     "timetables": [
       { "id": "tt-autumn", "name": "Autumn 2026", "startDate": "2026-09-01", "endDate": "2026-12-28", "cycle": {
         "anchor": "2026-08-31", "weekAligned": true,
         "days": [
           [
-            { "id": "l-w1-mon-1", "subjectId": "sub-calc", "typeId": "lt-lec", "start": 510, "end": 600, "bell": 1, "room": "Aud. 1", "placeId": null, "online": false },
-            { "id": "l-w1-mon-2", "subjectId": "sub-prog", "typeId": "lt-pr", "start": 610, "end": 700, "bell": 2, "room": null, "placeId": null, "online": false }
+            { "id": "l-w1-mon-1", "subjectId": "sub-calc", "typeId": "lt-lec", "start": 510, "end": 600, "bell": 1, "room": "Aud. 1", "placeId": null, "teacherId": null, "online": false },
+            { "id": "l-w1-mon-2", "subjectId": "sub-prog", "typeId": "lt-pr", "start": 610, "end": 700, "bell": 2, "room": null, "placeId": null, "teacherId": null, "online": false }
           ],
           [], [], [], [], [], [],
           [
-            { "id": "l-w2-mon-1", "subjectId": "sub-calc", "typeId": "lt-pr", "start": 610, "end": 700, "bell": 2, "room": null, "placeId": null, "online": false }
+            { "id": "l-w2-mon-1", "subjectId": "sub-calc", "typeId": "lt-pr", "start": 610, "end": 700, "bell": 2, "room": null, "placeId": null, "teacherId": null, "online": false }
           ],
           [],
           [
-            { "id": "l-w2-wed-1", "subjectId": "sub-prog", "typeId": "lt-lec", "start": 1020, "end": 1110, "bell": null, "room": null, "placeId": null, "online": true }
+            { "id": "l-w2-wed-1", "subjectId": "sub-prog", "typeId": "lt-lec", "start": 1020, "end": 1110, "bell": null, "room": null, "placeId": null, "teacherId": null, "online": true }
           ],
           [], [], [], []
         ]

@@ -1,4 +1,8 @@
 export const today = {
+  leaveNow: 'Time to leave',
+  leaveIn: 'Leave in {duration}',
+  leaveTo: 'To “{place}” {trip} · {what} at {time}',
+  lateIfNow: 'Already {duration} late',
   routeUnknown: 'Travel {from} → {to} not set',
   free: 'Free',
   atHome: 'At home',

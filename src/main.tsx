@@ -12,6 +12,7 @@ import { registerFeatures, runReadyHooks } from './core/registry';
 import { markRoot } from './core/router';
 import { loadAll } from './core/store/store';
 import { t } from './core/i18n';
+import { startMinuteTick } from './core/date';
 import { installLanguage } from './core/i18n/languages';
 import { skipOnboardingIfUsed } from './features/onboarding/Onboarding';
 
@@ -24,6 +25,7 @@ async function boot(): Promise<void> {
   installLanguage();
   installTheme();
   markRoot();
+  startMinuteTick();
   const root = document.getElementById('app');
   if (!root) throw new Error('#app not found');
   render(<App />, root);
