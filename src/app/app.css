@@ -902,3 +902,92 @@
   gap: 4px;
   padding-left: var(--space-4);
 }
+
+/* ── Money ── */
+.money-amount {
+  width: 100%;
+  border: 0;
+  background: none;
+  outline: none;
+  text-align: center;
+  font-size: var(--fs-3xl);
+  font-weight: 800;
+  padding: var(--space-2) 0;
+}
+.money-balance {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.money-balance__value {
+  font-size: var(--fs-3xl);
+  font-weight: 800;
+}
+.money-balance__sub {
+  margin-top: var(--space-2);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.month-nav__label {
+  flex: 1;
+  font-weight: 600;
+}
+.cat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-3) var(--space-4);
+}
+.cat-row + .cat-row {
+  box-shadow: inset 0 1px 0 var(--border);
+}
+.cat-row__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+}
+.cat-row__name {
+  flex: 1;
+}
+.cat-row__pct {
+  color: var(--text-3);
+}
+.goal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.goal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+.goal__line {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.goal__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.goals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.money-stats .ui-stat__value {
+  font-size: var(--fs-md);
+}
+.month-nav + .stat-grid {
+  margin-top: var(--space-3);
+}

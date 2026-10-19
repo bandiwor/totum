@@ -173,16 +173,6 @@ export const training = {
 } as const;
 
 export const stubs = {
-  money: {
-    title: 'Деньги',
-    overview: 'Обзор',
-    overviewText: 'Баланс, траты по категориям, прогноз накоплений.',
-    ops: 'Операции',
-    opsText: 'Доходы и траты: разовые, регулярные, растянутые на период.',
-    goals: 'Цели',
-    goalsText: 'Сколько накопить к дате и сколько откладывать в месяц.',
-    expense: 'Трата',
-  },
   notes: {
     title: 'Записи',
     all: 'Все',

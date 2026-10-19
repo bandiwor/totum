@@ -54,7 +54,7 @@ function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
   }
 }
 
-const AGENDA_ICONS: Record<string, IconName> = { tasks: 'tasks', nutrition: 'utensils', intake: 'pill' };
+const AGENDA_ICONS: Record<string, IconName> = { tasks: 'tasks', nutrition: 'utensils', intake: 'pill', money: 'coins' };
 
 const fromAgenda = (a: AgendaItem): BriefLine => ({
   key: `${a.source}-${a.id}`,

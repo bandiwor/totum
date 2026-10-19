@@ -63,4 +63,8 @@ export const collections = {
   intakeLog: 'Журнал приёма',
   waterLog: 'Вода',
   weightLog: 'Вес',
+  moneyCategories: 'Категории денег',
+  transactions: 'Операции',
+  recurring: 'Регулярные платежи',
+  goals: 'Цели накоплений',
 } as const;
