@@ -223,6 +223,8 @@ export function NumberStepper({
         <label class="ui-stepper__value">
           <input
             class="num"
+            // Width follows the value so the unit sits right next to it.
+            style={{ width: `${Math.max(2, String(value).length) + 0.6}ch` }}
             type="text"
             inputMode={precision > 0 ? 'decimal' : 'numeric'}
             value={String(value)}

@@ -1,5 +1,8 @@
 import type { FeatureDef } from '@/core/registry';
+import { PlacesScreen } from './PlacesScreen';
 import './model';
 
-/** Places & travel: data only for now; editing UI lives in Plan → Settings (stage 2). */
-export const placesFeature: FeatureDef = { id: 'places' };
+export const placesFeature: FeatureDef = {
+  id: 'places',
+  routes: [{ pattern: 'plan/places', component: PlacesScreen }],
+};

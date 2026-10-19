@@ -5,6 +5,9 @@ import { healthFeature } from '@/features/health';
 import { moneyFeature } from '@/features/money';
 import { notesFeature } from '@/features/notes';
 import { placesFeature } from '@/features/places';
+import { scheduleFeature } from '@/features/schedule';
+import { tasksFeature } from '@/features/tasks';
+import { workFeature } from '@/features/work';
 import { quickFeature } from '@/features/quick';
 import { settingsFeature } from '@/features/settings';
 
@@ -16,6 +19,9 @@ export const FEATURES: readonly FeatureDef[] = [
   moneyFeature,
   notesFeature,
   placesFeature,
+  scheduleFeature,
+  tasksFeature,
+  workFeature,
   quickFeature,
   settingsFeature,
 ];

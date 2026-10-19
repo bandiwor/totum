@@ -16,8 +16,8 @@ export interface BusyBlock {
   /** Where it happens. `null` = wherever you already are (online class, home workout). */
   placeId: string | null;
   color?: string;
-  /** Route back into the app, e.g. "#/plan/lesson/…". */
-  href?: string;
+  /** Short marker, e.g. "ДЗ 2". */
+  badge?: string;
 }
 
 export type TimelineSegment =

@@ -345,3 +345,322 @@
   font-family: ui-monospace, 'SF Mono', Menlo, monospace;
   font-size: 12px;
 }
+
+/* ── Shared bits ── */
+.color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: none;
+}
+.widget-empty {
+  padding: var(--space-3) var(--space-1);
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
+.task--done {
+  color: var(--text-3);
+  text-decoration: line-through;
+}
+.task--overdue {
+  color: var(--danger);
+}
+.tasks__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+.reorder {
+  display: flex;
+  color: var(--text-3);
+}
+.today__setup-title {
+  font-weight: 700;
+  color: var(--accent);
+}
+.today__setup-text {
+  margin-top: 2px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+/* ── Day timeline ── */
+.tl {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tl-block {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+  transition: transform var(--dur-fast) var(--ease-out), opacity var(--dur-base);
+}
+.tl-block:active {
+  transform: scale(0.98);
+}
+.tl-block__time {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 44px;
+  flex: none;
+  padding: 10px 0;
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+.tl-block__time span:first-child {
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+.tl-block__card {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px var(--space-3) 10px calc(var(--space-3) + 6px);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--block-color) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--block-color) 22%, transparent);
+  overflow: hidden;
+}
+.tl-block__card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--block-color);
+}
+.tl-block__title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl-block__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.tl-block__badge {
+  position: absolute;
+  top: 10px;
+  right: var(--space-3);
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--warning-soft);
+  color: var(--warning);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.tl-block.is-past {
+  opacity: 0.45;
+}
+.tl-block.is-current .tl-block__card {
+  box-shadow: 0 0 0 2px var(--block-color);
+}
+.tl-block.is-cancelled {
+  opacity: 0.5;
+}
+.tl-block.is-cancelled .tl-block__title {
+  text-decoration: line-through;
+}
+.tl-travel,
+.tl-free {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding-left: calc(44px + var(--space-3));
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+.tl-travel {
+  color: var(--accent);
+}
+.tl-travel .num {
+  font-weight: 600;
+}
+.tl-travel.is-late {
+  color: var(--danger);
+}
+.tl-free {
+  margin-left: calc(44px + var(--space-3));
+  padding: 6px var(--space-3);
+  border: 1px dashed color-mix(in srgb, var(--accent-2) 45%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--accent-2);
+  background: var(--accent-2-soft);
+}
+.tl-free .num {
+  font-weight: 600;
+}
+.tl-travel.is-past,
+.tl-free.is-past {
+  opacity: 0.4;
+}
+.tl-now {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 18px;
+  color: var(--danger);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+}
+.tl-now::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  margin-left: var(--space-2);
+  border-radius: 1px;
+  background: var(--danger);
+}
+
+/* ── Lesson sheet ── */
+.lesson-head {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.lesson-head__bar {
+  width: 5px;
+  border-radius: 3px;
+  background: var(--lesson-color);
+}
+.lesson-head__time {
+  font-weight: 600;
+}
+.lesson-head__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* ── Week ── */
+.week__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.week__range {
+  flex: 1;
+  font-weight: 600;
+}
+.week {
+  overflow: hidden;
+}
+.week__head,
+.week__foot {
+  display: grid;
+  grid-template-columns: 22px repeat(7, 1fr);
+  gap: 3px;
+  padding: var(--space-2) var(--space-2) var(--space-2) 4px;
+}
+.week__day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.week__day .num {
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+.week__day.is-today .num {
+  color: var(--accent);
+}
+.week__body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 22px repeat(7, 1fr);
+  gap: 3px;
+  padding: 0 var(--space-2) 0 4px;
+}
+.week__axis {
+  position: relative;
+}
+.week__axis span {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.week__col {
+  position: relative;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.week__col:active {
+  opacity: 0.7;
+}
+.week__col > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.week__free {
+  background: var(--accent-2-soft);
+}
+.week__travel {
+  background: repeating-linear-gradient(135deg, var(--surface-3) 0 3px, transparent 3px 6px);
+}
+.week__travel.is-late {
+  background: repeating-linear-gradient(135deg, var(--danger-soft) 0 3px, transparent 3px 6px);
+}
+.week__busy {
+  border-radius: 4px;
+  background: var(--block-color);
+  padding: 2px 3px;
+  overflow: hidden;
+}
+.week__busy span {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--accent-contrast);
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: anywhere;
+}
+.week__foot span {
+  text-align: center;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--accent-2);
+}
+.week__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.bells-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.bells-preview span {
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  text-align: center;
+}

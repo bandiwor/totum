@@ -8,7 +8,7 @@ import { App } from './app/App';
 import { installTheme } from './app/theme';
 import { installNativeFeel } from './core/native';
 import { registerServiceWorker, requestPersistentStorage } from './core/pwa';
-import { registerFeatures } from './core/registry';
+import { registerFeatures, runReadyHooks } from './core/registry';
 import { markRoot } from './core/router';
 import { loadAll } from './core/store/store';
 
@@ -16,6 +16,7 @@ async function boot(): Promise<void> {
   installNativeFeel();
   registerFeatures(FEATURES);
   await loadAll();
+  runReadyHooks();
   installTheme();
   markRoot();
   const root = document.getElementById('app');

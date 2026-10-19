@@ -57,8 +57,22 @@ export interface TodayWidget {
 
 /** Produces time-occupying blocks (classes, workouts, shifts) for the free-time engine. */
 export interface BusySource {
+  /** Must equal the `source` of the blocks it produces. */
   id: string;
   blocksFor: (date: ISODate) => BusyBlock[];
+  /** Planned items cancelled on this date — shown greyed out so they can be restored. */
+  cancelledFor?: (date: ISODate) => BusyBlock[];
+  /** Opens the details of a block (by its id). */
+  open?: (date: ISODate, id: string) => void;
+}
+
+/** "Add to this day" entries: one-off class, extra shift, extra workout… */
+export interface DayAction {
+  id: string;
+  label: string;
+  icon: IconName;
+  order: number;
+  run: (date: ISODate) => void;
 }
 
 /** Things to do on a day that aren't blocks of time: tasks, homework, meals, intakes. */
@@ -85,6 +99,9 @@ export interface FeatureDef {
   todayWidgets?: TodayWidget[];
   busySources?: BusySource[];
   agendaSources?: AgendaSource[];
+  dayActions?: DayAction[];
+  /** Runs once after data is loaded (seeding defaults, cleanup). */
+  onReady?: () => void;
 }
 
 const features: FeatureDef[] = [];
@@ -96,6 +113,10 @@ export function registerFeatures(defs: readonly FeatureDef[]): void {
   }
 }
 
+export function runReadyHooks(): void {
+  for (const f of features) f.onReady?.();
+}
+
 const sorted = <T extends { order: number }>(items: T[]): T[] => items.sort((a, b) => a.order - b.order);
 
 export const registry = {
@@ -105,6 +126,11 @@ export const registry = {
   todayWidgets: (): TodayWidget[] => sorted(features.flatMap((f) => f.todayWidgets ?? [])),
   busyBlocks: (date: ISODate): BusyBlock[] =>
     features.flatMap((f) => f.busySources ?? []).flatMap((s) => s.blocksFor(date)),
+  cancelledBlocks: (date: ISODate): BusyBlock[] =>
+    features.flatMap((f) => f.busySources ?? []).flatMap((s) => s.cancelledFor?.(date) ?? []),
+  openBlock: (date: ISODate, block: BusyBlock): void =>
+    features.flatMap((f) => f.busySources ?? []).find((s) => s.id === block.source)?.open?.(date, block.id),
+  dayActions: (): DayAction[] => sorted(features.flatMap((f) => f.dayActions ?? [])),
   agenda: (date: ISODate): AgendaItem[] =>
     features.flatMap((f) => f.agendaSources ?? []).flatMap((s) => s.itemsFor(date)),
 };
