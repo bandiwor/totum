@@ -1,6 +1,6 @@
 import { useState } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
-import { Button, ColorPicker, colorVar, Field, Form, IconButton, List, ListRow, openSheet, Page, Section, SheetActions, TextField, type ColorKey } from '@/ui';
+import { Button, ColorPicker, colorVar, Field, Form, ListRow, openSheet, Page, ReorderList, Section, SheetActions, TextField, type ColorKey } from '@/ui';
 import { lessonTypes, sortedLessonTypes, timetables, type LessonType } from './model';
 import { t } from '@/core/i18n';
 
@@ -51,36 +51,25 @@ function TypeForm({ type, close }: { type: LessonType | null; close: () => void 
 const openForm = (type: LessonType | null) =>
   void openSheet((close) => <TypeForm type={type} close={close} />, { title: type ? type.name : t('schedule.newType') });
 
-function move(type: LessonType, dir: -1 | 1): void {
-  const list = sortedLessonTypes.value;
-  const i = list.findIndex((t) => t.id === type.id);
-  const other = list[i + dir];
-  if (!other) return;
-  lessonTypes.update(type.id, { order: other.order });
-  lessonTypes.update(other.id, { order: type.order });
-}
-
 export function TypesScreen() {
   const list = sortedLessonTypes.value;
   return (
     <Page title={t('schedule.types')} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openForm(null)}>{t('common.newM')}</Button>}>
       <Section>
-        <List>
-          {list.map((type, i) => (
+        <ReorderList
+          items={list}
+          keyOf={(type) => type.id}
+          gripLabel={t('common.reorder')}
+          onReorder={(ids) => ids.forEach((id, order) => lessonTypes.update(id, { order }))}
+          render={(type) => (
             <ListRow
-              key={type.id}
               leading={<span class="color-dot" style={{ background: colorVar(type.color) }} />}
               title={type.name}
               subtitle={type.short}
-              trailing={
-                <span class="reorder">
-                  <IconButton icon="chevronDown" label={t('schedule.down')} disabled={i === list.length - 1} onClick={(e) => { e.stopPropagation(); move(type, 1); }} />
-                </span>
-              }
               onClick={() => openForm(type)}
             />
-          ))}
-        </List>
+          )}
+        />
       </Section>
     </Page>
   );

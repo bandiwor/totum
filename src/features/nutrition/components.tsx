@@ -66,6 +66,7 @@ export function AmountForm({
   submitLabel,
   onSubmit,
   extra,
+  more,
   close,
 }: {
   foodId: string;
@@ -73,6 +74,8 @@ export function AmountForm({
   submitLabel: string;
   onSubmit: (grams: number) => void;
   extra?: preact.ComponentChildren;
+  /** When adding: "Add more" saves and reopens the picker; the main button saves and finishes. */
+  more?: () => void;
   close: () => void;
 }) {
   const food = foods.get(foodId);
@@ -103,6 +106,24 @@ export function AmountForm({
       </p>
       {extra}
       <SheetActions>
+        {more && (
+          <Button
+            variant="secondary"
+            size="lg"
+            icon="plus"
+            block
+            disabled={grams <= 0}
+            feedback={false}
+            onClick={() => {
+              haptic('success');
+              onSubmit(grams);
+              close();
+              setTimeout(more, 280);
+            }}
+          >
+            {t('nutrition.addMore')}
+          </Button>
+        )}
         <Button
           variant="primary"
           size="lg"
@@ -115,7 +136,7 @@ export function AmountForm({
             close();
           }}
         >
-          {submitLabel}
+          {more ? t('nutrition.addDone') : submitLabel}
         </Button>
       </SheetActions>
     </div>

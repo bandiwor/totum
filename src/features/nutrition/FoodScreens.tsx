@@ -270,7 +270,7 @@ export function DishEditor({ params }: RouteProps) {
       (f) =>
         void openSheet(
           (close) => (
-            <AmountForm foodId={f.id} initial={100} submitLabel={t('common.add')} onSubmit={(grams) => patch({ ingredients: [...dish.ingredients, { foodId: f.id, grams }] })} close={close} />
+            <AmountForm foodId={f.id} initial={100} submitLabel={t('common.add')} onSubmit={(grams) => patch({ ingredients: [...(foods.get(dish.id)?.ingredients ?? []), { foodId: f.id, grams }] })} more={addIngredient} close={close} />
           ),
           { title: f.name },
         ),

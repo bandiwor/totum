@@ -8,7 +8,8 @@ import { navigate } from '@/core/router';
 import { Badge, Button, Card, Checkbox, ChoiceChips, cx, DateStrip, Field, List, ListRow, openSheet, Section } from '@/ui';
 import { addExtra, clearItem, eatMeal, fmtAmount, fmtKcal, setItem } from './actions';
 import { AmountForm, MacroSummary, openFoodPicker } from './components';
-import { IntakeChecklist, WaterControl } from './IntakeScreens';
+import { IntakeBlock } from './widgets';
+import { isModuleOn } from '@/core/modules';
 import { foodLog, foods, macrosOf, nutritionDay, type DayItem, type DayMeal, type FoodLogEntry } from './model';
 
 function openItem(date: ISODate, day: DayMeal, it: DayItem): void {
@@ -120,9 +121,9 @@ function openExtra(e: FoodLogEntry): void {
   );
 }
 
-function ExtraForm({ date, foodId, close }: { date: ISODate; foodId: string; close: () => void }) {
+function ExtraForm({ date, foodId, mealId: initialMeal, close }: { date: ISODate; foodId: string; mealId: string | null; close: () => void }) {
   const meals = nutritionDay(date).meals;
-  const [mealId, setMealId] = useState<string | null>(null);
+  const [mealId, setMealId] = useState<string | null>(initialMeal);
   const food = foods.get(foodId);
   return (
     <AmountForm
@@ -130,6 +131,7 @@ function ExtraForm({ date, foodId, close }: { date: ISODate; foodId: string; clo
       initial={food?.portions[0]?.grams ?? 100}
       submitLabel={t('common.add')}
       onSubmit={(grams) => addExtra(date, foodId, grams, mealId)}
+      more={() => openAddFood(date, mealId)}
       extra={
         meals.length > 0 ? (
           <Field label={t('nutrition.toMeal')}>
@@ -147,8 +149,9 @@ function ExtraForm({ date, foodId, close }: { date: ISODate; foodId: string; clo
   );
 }
 
-export function openAddFood(date: ISODate): void {
-  openFoodPicker((f) => void openSheet((close) => <ExtraForm date={date} foodId={f.id} close={close} />, { title: f.name }));
+/** Picker → amount → "add more" loops back to the picker, keeping the chosen meal. */
+export function openAddFood(date: ISODate, mealId: string | null = null): void {
+  openFoodPicker((f) => void openSheet((close) => <ExtraForm date={date} foodId={f.id} mealId={mealId} close={close} />, { title: f.name }));
 }
 
 const foodDate = signal<ISODate | null>(null);
@@ -156,59 +159,63 @@ const foodDate = signal<ISODate | null>(null);
 export function NutritionView() {
   const date = foodDate.value ?? today();
   const day = nutritionDay(date);
+  const food = isModuleOn('nutrition');
+  const intake = isModuleOn('intake');
   return (
     <>
       <DateStrip value={date} onChange={(d) => (foodDate.value = d === today() ? null : d)} />
-      <Section>
-        <MacroSummary fact={day.fact} plan={day.plan} />
-      </Section>
+      {food && (
+        <>
+          <Section>
+            <MacroSummary fact={day.fact} plan={day.plan} />
+          </Section>
 
-      <Section title={t('nutrition.meals')} action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openAddFood(date)}>{t('nutrition.addFood')}</Button>}>
-        {day.meals.length === 0 ? (
-          <Card onClick={() => navigate('health/meals')}>
-            <p class="today__setup-title">{t('nutrition.noPlan')}</p>
-            <p class="today__setup-text">{t('nutrition.noPlanText')}</p>
-          </Card>
-        ) : (
-          <div class="meals">
-            {day.meals.map((m) => (
-              <MealCard key={m.meal.id} date={date} day={m} />
-            ))}
-          </div>
-        )}
-      </Section>
+          <Section title={t('nutrition.meals')} action={<Button size="sm" variant="ghost" icon="plus" onClick={() => openAddFood(date)}>{t('nutrition.addFood')}</Button>}>
+            {day.meals.length === 0 ? (
+              <Card onClick={() => navigate('health/meals')}>
+                <p class="today__setup-title">{t('nutrition.noPlan')}</p>
+                <p class="today__setup-text">{t('nutrition.noPlanText')}</p>
+              </Card>
+            ) : (
+              <div class="meals">
+                {day.meals.map((m) => (
+                  <MealCard key={m.meal.id} date={date} day={m} />
+                ))}
+              </div>
+            )}
+          </Section>
 
-      {day.extras.length > 0 && (
-        <Section title={t('nutrition.outsidePlan')}>
-          <List>
-            {day.extras.map((e) => (
-              <ListRow
-                key={e.id}
-                title={foods.get(e.foodId)?.name ?? '—'}
-                subtitle={fmtAmount(e.foodId, e.grams)}
-                value={fmtKcal(macrosOf(e.foodId, e.grams).kcal)}
-                onClick={() => openExtra(e)}
-              />
-            ))}
-          </List>
+          {day.extras.length > 0 && (
+            <Section title={t('nutrition.outsidePlan')}>
+              <List>
+                {day.extras.map((e) => (
+                  <ListRow
+                    key={e.id}
+                    title={foods.get(e.foodId)?.name ?? '—'}
+                    subtitle={fmtAmount(e.foodId, e.grams)}
+                    value={fmtKcal(macrosOf(e.foodId, e.grams).kcal)}
+                    onClick={() => openExtra(e)}
+                  />
+                ))}
+              </List>
+            </Section>
+          )}
+        </>
+      )}
+
+      {(intake || isModuleOn('water')) && (
+        <Section title={t('nutrition.intakeTitle')}>
+          <IntakeBlock date={date} />
         </Section>
       )}
 
-      <Section title={t('nutrition.intakeTitle')}>
-        <Card>
-          <WaterControl date={date} />
-        </Card>
-        <IntakeChecklist date={date} />
-      </Section>
-
       <Section>
         <List>
-          <ListRow icon="calendar" title={t('nutrition.mealPlan')} subtitle={t('nutrition.mealPlanSub')} chevron onClick={() => navigate('health/meals')} />
-          <ListRow icon="utensils" title={t('nutrition.foods')} subtitle={t('nutrition.foodsSub')} chevron onClick={() => navigate('health/foods')} />
-          <ListRow icon="pill" title={t('nutrition.intakeItems')} subtitle={t('nutrition.intakeSub')} chevron onClick={() => navigate('health/intake')} />
+          {food && <ListRow icon="calendar" title={t('nutrition.mealPlan')} subtitle={t('nutrition.mealPlanSub')} chevron onClick={() => navigate('health/meals')} />}
+          {food && <ListRow icon="utensils" title={t('nutrition.foods')} subtitle={t('nutrition.foodsSub')} chevron onClick={() => navigate('health/foods')} />}
+          {intake && <ListRow icon="pill" title={t('nutrition.intakeItems')} subtitle={t('nutrition.intakeSub')} chevron onClick={() => navigate('health/intake')} />}
         </List>
       </Section>
     </>
   );
 }
-

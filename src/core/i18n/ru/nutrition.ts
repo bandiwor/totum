@@ -1,7 +1,9 @@
 export const nutrition = {
-  tabs: { training: 'Тренировки', food: 'Питание', body: 'Тело' },
+  tabs: { training: 'Тренировки', food: 'Питание', body: 'Тело', sleep: 'Сон' },
   // Summary
   kcal: 'Ккал',
+  addMore: 'Добавить ещё',
+  addDone: 'Готово',
   protein: 'Белки',
   fat: 'Жиры',
   carbs: 'Углеводы',

@@ -1,31 +1,46 @@
 import { t } from '@/core/i18n';
+import { moduleVisible, type ModuleSpec } from '@/core/modules';
 import type { FeatureDef } from '@/core/registry';
 import { BodyView } from '@/features/nutrition/BodyView';
 import { healthTab, type HealthTab } from '@/features/nutrition/healthTab';
 import { NutritionView } from '@/features/nutrition/NutritionView';
+import { SleepView } from '@/features/sleep/SleepView';
 import { TrainingView } from '@/features/training/TrainingView';
 import { Page, SegmentedControl } from '@/ui';
 
-const TABS: readonly HealthTab[] = ['training', 'food', 'body'];
+/** Segments of the Health tab and the modules that keep each one visible. */
+const SEGMENTS: readonly { id: HealthTab; module: ModuleSpec }[] = [
+  { id: 'training', module: 'training' },
+  { id: 'food', module: ['nutrition', 'water', 'intake'] },
+  { id: 'body', module: 'body' },
+  { id: 'sleep', module: 'sleep' },
+];
 
 function HealthScreen() {
+  const visible = SEGMENTS.filter((s) => moduleVisible(s.module));
+  const current = visible.find((s) => s.id === healthTab.value)?.id ?? visible[0]?.id ?? 'training';
   return (
     <Page
       title={t('app.tabs.health')}
       large
-      scrollKey={healthTab.value}
-      toolbar={<SegmentedControl options={TABS.map((value) => ({ value, label: t(`nutrition.tabs.${value}`) }))} value={healthTab.value} onChange={(v) => (healthTab.value = v)} />}
+      scrollKey={current}
+      toolbar={
+        visible.length > 1 ? (
+          <SegmentedControl options={visible.map((s) => ({ value: s.id, label: t(`nutrition.tabs.${s.id}`) }))} value={current} onChange={(v) => (healthTab.value = v)} />
+        ) : undefined
+      }
     >
-      {healthTab.value === 'training' && <TrainingView />}
-      {healthTab.value === 'food' && <NutritionView />}
-      {healthTab.value === 'body' && <BodyView />}
+      {current === 'training' && <TrainingView />}
+      {current === 'food' && <NutritionView />}
+      {current === 'body' && <BodyView />}
+      {current === 'sleep' && <SleepView />}
     </Page>
   );
 }
 
-/** The Health tab hosts Training and Nutrition/Body; each feature registers its own routes and actions. */
+/** The Health tab hosts Training, Nutrition/Body and Sleep; each feature registers its own routes and actions. */
 export const healthFeature: FeatureDef = {
   id: 'health',
-  tab: { path: 'health', label: 'app.tabs.health', icon: 'health', order: 20 },
+  tab: { path: 'health', label: 'app.tabs.health', icon: 'health', order: 20, module: SEGMENTS.flatMap((s) => (typeof s.module === 'string' ? [s.module] : s.module)) },
   routes: [{ pattern: 'health', component: HealthScreen }],
 };

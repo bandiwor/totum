@@ -1,4 +1,4 @@
-import { useEffect } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { haptic } from '@/core/haptics';
 import { applyUpdate, updateReady } from '@/core/pwa';
 import { registry } from '@/core/registry';
@@ -11,20 +11,38 @@ import { t } from '@/core/i18n';
 
 function TabBar() {
   const active = currentTab.value;
+  const tabs = registry.tabs();
+  const index = Math.max(0, tabs.findIndex((tab) => tab.path === active));
+  const prev = useRef(index);
+  const [moving, setMoving] = useState(0);
+  useEffect(() => {
+    if (prev.current === index) return;
+    prev.current = index;
+    setMoving((n) => n + 1);
+  }, [index]);
+
   return (
-    <nav class="tabbar">
-      {registry.tabs().map((tab) => (
+    <nav class="tabbar" style={{ '--n': tabs.length, '--i': index }}>
+      {tabs.some((tab) => tab.path === active) && (
+        <span class="tabbar__indicator">
+          <span key={moving} class={cx('tabbar__blob', moving > 0 && 'is-moving')} />
+        </span>
+      )}
+      {tabs.map((tab) => (
         <button
           key={tab.path}
           type="button"
           class={cx('ui-tab', active === tab.path && 'is-active')}
+          aria-current={active === tab.path ? 'page' : undefined}
           onClick={() => {
             if (active === tab.path && path.value === tab.path) return;
             haptic('selection');
             navigate(tab.path);
           }}
         >
-          <Icon name={tab.icon} size={24} />
+          <span class="ui-tab__icon">
+            <Icon name={tab.icon} size={22} />
+          </span>
           <span>{t(tab.label)}</span>
         </button>
       ))}
@@ -58,9 +76,11 @@ export function App() {
     }
   }
 
+  // Unknown routes and sections of turned-off modules fall back to the first tab.
+  const tabHidden = registry.allTabs().some((tab) => tab.path === currentTab.value) && !registry.tabs().some((tab) => tab.path === currentTab.value);
   useEffect(() => {
-    if (!match) navigate(defaultTab, { replace: true });
-  }, [match, defaultTab]);
+    if (!match || tabHidden) navigate(defaultTab, { replace: true });
+  }, [match, tabHidden, defaultTab]);
 
   const Screen = match?.component;
   return (

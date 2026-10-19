@@ -5,7 +5,7 @@ import type { BusyBlock } from '@/core/timeline';
 import { Button } from '@/ui';
 import { colorVar } from '@/ui/forms';
 import { ExerciseScreen, ExercisesScreen } from './LibraryScreens';
-import { activeSession, cancelledWorkouts, plannedWorkouts, seedTraining, sessionForSlot, sessionsOn, templates, type PlannedWorkout } from './model';
+import { activeSession, cancelledWorkouts, plannedWorkouts, sessionForSlot, sessionsOn, templates, type PlannedWorkout } from './model';
 import { openAddWorkout, openWorkoutSlot, ProgramDayScreen, ProgramScreen } from './ProgramScreens';
 import { ProgressScreen } from './ProgressScreen';
 import { SessionScreen } from './SessionScreen';
@@ -82,6 +82,7 @@ function relevance(): number {
 
 export const trainingFeature: FeatureDef = {
   id: 'training',
+  module: 'training',
   routes: [
     { pattern: 'health/program', component: ProgramScreen },
     { pattern: 'health/program/day/:index', component: ProgramDayScreen },
@@ -118,5 +119,4 @@ export const trainingFeature: FeatureDef = {
       screen: QuickWorkout,
     },
   ],
-  onReady: seedTraining,
 };

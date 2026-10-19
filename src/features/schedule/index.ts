@@ -2,13 +2,13 @@ import type { FeatureDef } from '@/core/registry';
 import { BellsScreen } from './BellsScreen';
 import { cancelledLessonBlocks, lessonBlocks } from './busy';
 import { openAddLesson, openLessonSheet } from './LessonSheet';
-import { seedSchedule } from './model';
 import { SubjectsScreen } from './SubjectsScreen';
 import { TimetableDayEditor, TimetableEditor, TimetablesScreen } from './TimetablesScreen';
 import { TypesScreen } from './TypesScreen';
 
 export const scheduleFeature: FeatureDef = {
   id: 'schedule',
+  module: 'schedule',
   routes: [
     { pattern: 'plan/subjects', component: SubjectsScreen },
     { pattern: 'plan/types', component: TypesScreen },
@@ -19,5 +19,4 @@ export const scheduleFeature: FeatureDef = {
   ],
   busySources: [{ id: 'schedule', blocksFor: lessonBlocks, cancelledFor: cancelledLessonBlocks, open: openLessonSheet }],
   dayActions: [{ id: 'lesson', label: 'schedule.oneOffLesson', icon: 'calendar', order: 10, run: openAddLesson }],
-  onReady: seedSchedule,
 };

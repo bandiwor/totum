@@ -1,10 +1,13 @@
 export const today = {
+  routeUnknown: 'Дорога {from} → {to} не указана',
   free: 'Свободно',
   atHome: 'Дома',
   away: 'Вне дома',
   travel: 'Дорога',
   day: 'День',
   addTo: 'Добавить · {day}',
+  packsTitle: 'Начни с набора',
+  packsText: 'Приложение пустое. Добавь готовые категории, упражнения и продукты или вставь свой набор от ИИ.',
   setupTitle: 'Настрой расписание',
   setupText: 'Пары, работа, места и дорога — и здесь появится твой день со свободными окнами.',
   cancelledHint: 'отменена · нажми, чтобы вернуть',
@@ -29,6 +32,7 @@ export const quick = {
 
 export const settings = {
   title: 'Настройки',
+  general: 'Основное',
   data: 'Данные',
   export: 'Экспорт',
   exportSub: 'Скопировать все данные',

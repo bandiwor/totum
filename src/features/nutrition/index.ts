@@ -5,6 +5,7 @@ import { MealPlanDayScreen, MealPlanScreen } from './MealPlanScreens';
 import {
   foodHint,
   foodRelevance,
+  intakeAgenda,
   intakeHint,
   IntakeWidget,
   nutritionAgenda,
@@ -17,6 +18,7 @@ import {
 
 export const nutritionFeature: FeatureDef = {
   id: 'nutrition',
+  module: 'nutrition',
   routes: [
     { pattern: 'health/meals', component: MealPlanScreen },
     { pattern: 'health/meals/day/:index', component: MealPlanDayScreen },
@@ -26,12 +28,15 @@ export const nutritionFeature: FeatureDef = {
   ],
   todayWidgets: [
     { id: 'nutrition', order: 20, component: NutritionWidget },
-    { id: 'intake', order: 30, component: IntakeWidget },
+    { id: 'intake', order: 30, component: IntakeWidget, module: ['water', 'intake'] },
   ],
-  agendaSources: [{ id: 'nutrition', itemsFor: nutritionAgenda }],
+  agendaSources: [
+    { id: 'nutrition', itemsFor: nutritionAgenda },
+    { id: 'intake', itemsFor: intakeAgenda, module: 'intake' },
+  ],
   quickActions: [
     { id: 'food', label: 'nutrition.quickFood', icon: 'utensils', order: 10, hint: foodHint, relevance: foodRelevance, screen: QuickFood },
-    { id: 'intake', label: 'nutrition.intakeTitle', icon: 'droplet', order: 11, hint: intakeHint, screen: QuickIntake },
-    { id: 'weight', label: 'nutrition.quickWeight', icon: 'scale', order: 40, hint: weightHint, screen: QuickWeight },
+    { id: 'intake', label: 'nutrition.intakeTitle', icon: 'droplet', order: 11, hint: intakeHint, screen: QuickIntake, module: ['water', 'intake'] },
+    { id: 'weight', label: 'nutrition.quickWeight', icon: 'scale', order: 40, hint: weightHint, screen: QuickWeight, module: 'body' },
   ],
 };

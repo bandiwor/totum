@@ -1,5 +1,6 @@
 export const common = {
   save: 'Сохранить',
+  reorder: 'Перетащить',
   add: 'Добавить',
   new: 'Новая',
   newM: 'Новый',

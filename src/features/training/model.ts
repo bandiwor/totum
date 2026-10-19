@@ -272,24 +272,3 @@ export function formatTarget(target: Target, measure: Measure): string {
   if (target.rpe !== null) parts.push(t('training.fmtRpe', { n: target.rpe }));
   return parts.join(' · ');
 }
-
-// ── Seeding ────────────────────────────────────────────────────────────────
-
-const trainingMeta = defineDoc<{ seeded: boolean }>('trainingMeta', { seeded: false });
-
-export function seedTraining(): void {
-  if (trainingMeta.value.value.seeded) return;
-  if (categories.all.value.length === 0) {
-    const defaults = [
-      ['chest', 'c1'],
-      ['back', 'c2'],
-      ['legs', 'c3'],
-      ['shoulders', 'c5'],
-      ['arms', 'c6'],
-      ['core', 'c7'],
-      ['cardio', 'c4'],
-    ] as const;
-    defaults.forEach(([key, color], order) => categories.add({ name: t(`training.defaultCategories.${key}`), color, order }));
-  }
-  trainingMeta.set({ seeded: true });
-}

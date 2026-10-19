@@ -30,6 +30,8 @@ export type TimelineSegment =
       to: string;
       /** Minutes you would be late by if the gap is shorter than the trip. */
       late: Minutes;
+      /** No travel time is set between these places — shown as a zero-length hint. */
+      unknown: boolean;
     }
   | { kind: 'free'; start: Minutes; end: Minutes; placeId: string | null; atHome: boolean };
 
@@ -58,6 +60,8 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
 
   const trip = (from: string | null, to: string | null): Minutes =>
     from === null || to === null || from === to ? 0 : (o.travel(from, to) ?? 0);
+  const known = (from: string | null, to: string | null): boolean =>
+    from === null || to === null || from === to || o.travel(from, to) !== undefined;
 
   const free = (start: Minutes, end: Minutes, placeId: string | null): void => {
     const s = Math.max(start, o.dayStart);
@@ -67,9 +71,14 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
   };
 
   const travel = (from: string | null, to: string | null, start: Minutes, minutes: Minutes, latestEnd: Minutes): Minutes => {
-    if (from === null || to === null || from === to || minutes <= 0) return start;
+    if (from === null || to === null || from === to) return start;
+    if (!known(from, to)) {
+      segments.push({ kind: 'travel', start, end: start, from, to, late: 0, unknown: true });
+      return start;
+    }
+    if (minutes <= 0) return start;
     const end = start + minutes;
-    segments.push({ kind: 'travel', start, end, from, to, late: Math.max(0, end - latestEnd) });
+    segments.push({ kind: 'travel', start, end, from, to, late: Math.max(0, end - latestEnd), unknown: false });
     return end;
   };
 
@@ -84,7 +93,8 @@ export function buildTimeline(blocks: readonly BusyBlock[], o: TimelineOptions):
     }
 
     const gap = block.start - cursor;
-    const canGoHome = home !== null && location !== null && location !== home && target !== home;
+    // A detour home is only planned when both legs have a known travel time.
+    const canGoHome = home !== null && location !== null && location !== home && target !== home && known(location, home) && known(home, target);
     const toHome = canGoHome ? trip(location, home) : 0;
     const fromHome = canGoHome ? trip(home, target) : 0;
 

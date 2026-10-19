@@ -69,4 +69,6 @@ export const collections = {
   goals: 'Цели накоплений',
   noteCollections: 'Коллекции записей',
   notes: 'Записи',
+  languages: 'Языки',
+  sleepLog: 'Сон',
 } as const;

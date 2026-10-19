@@ -87,17 +87,6 @@ export const schedule = {
   typePlaceholder: 'Коллоквиум',
   short: 'Сокращение',
   shortPlaceholder: 'Кол',
-  down: 'Ниже',
-  defaultTypes: {
-    lecture: 'Лекция',
-    lectureShort: 'Лек',
-    practice: 'Практика',
-    practiceShort: 'Пр',
-    lab: 'Лабораторная',
-    labShort: 'Лаб',
-    seminar: 'Семинар',
-    seminarShort: 'Сем',
-  },
   // Bells
   bells: 'Сетка звонков',
   bellsEmpty: 'Сетка не задана',

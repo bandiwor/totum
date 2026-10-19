@@ -169,5 +169,4 @@ export const training = {
   weeklySets: 'Рабочие подходы по неделям',
   wellbeingScale: 'Самочувствие: 1 — {low}, 5 — {high}.',
   periods: { '1m': '1 мес', '3m': '3 мес', '6m': '6 мес', all: 'Всё' },
-  defaultCategories: { chest: 'Грудь', back: 'Спина', legs: 'Ноги', shoulders: 'Плечи', arms: 'Руки', core: 'Пресс', cardio: 'Кардио' },
 } as const;

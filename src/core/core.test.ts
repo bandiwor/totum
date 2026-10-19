@@ -89,6 +89,28 @@ describe('timeline', () => {
     expect(free.some((s) => s.kind === 'free' && s.atHome && s.start === parseTime('11:10'))).toBe(true);
   });
 
+  it('routes a work shift from the previous place and back home', () => {
+    const work: BusyBlock = { ...block('shift', '13:00', '18:00', 'cafe'), source: 'work' };
+    const routes2 = { ...routes, 'uni>cafe': 25, 'cafe>home': 30, 'home>cafe': 30 };
+    const segs = buildTimeline([block('p1', '09:00', '10:30', 'uni'), work], { ...opts, travel: (a, b) => routes2[`${a}>${b}` as keyof typeof routes2] });
+    const trips = segs.filter((s) => s.kind === 'travel');
+    // 2.5 h gap: uni→home 40 + home→cafe 30 leaves 80 min at home ≥ 30 → detour home.
+    expect(trips.map((s) => s.kind === 'travel' && `${s.from}>${s.to}@${s.start}`)).toEqual([
+      `home>uni@${parseTime('08:20')}`,
+      `uni>home@${parseTime('10:30')}`,
+      `home>cafe@${parseTime('12:30')}`,
+      `cafe>home@${parseTime('18:00')}`,
+    ]);
+    expect(summarizeFreeTime(segs).travel).toBe(40 + 40 + 30 + 30);
+  });
+
+  it('marks unknown routes and never detours home through them', () => {
+    const segs = buildTimeline([block('p1', '09:00', '10:30', 'uni'), block('s', '15:00', '18:00', 'office')], opts);
+    const toOffice = segs.find((s) => s.kind === 'travel' && s.to === 'office');
+    expect(toOffice).toMatchObject({ unknown: true, start: parseTime('15:00'), end: parseTime('15:00') });
+    expect(segs.some((s) => s.kind === 'travel' && s.from === 'uni' && s.to === 'home')).toBe(false);
+  });
+
   it('flags lateness when the gap is too short', () => {
     const segs = buildTimeline([block('p1', '09:00', '10:30', 'uni'), block('p2', '10:35', '11:00', 'gym')], opts);
     const t = segs.find((s) => s.kind === 'travel' && s.to === 'gym');

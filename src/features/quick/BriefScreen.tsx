@@ -31,6 +31,7 @@ function fromSegment(seg: TimelineSegment, now: number): BriefLine | null {
         ...(seg.block.subtitle ? { note: seg.block.subtitle } : {}),
       };
     case 'travel':
+      if (seg.unknown) return null;
       return {
         key,
         time: formatTime(seg.start),

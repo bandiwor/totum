@@ -6,7 +6,6 @@ import { resolveDay } from '@/core/plan';
 import { defineOverrides } from '@/core/store/overrides';
 import { cycleSchema, entityFields, isoDate, minutes } from '@/core/store/schema';
 import { defineCollection, defineDoc, type Entity } from '@/core/store/store';
-import { t } from '@/core/i18n';
 
 // ── Subjects & lesson types ────────────────────────────────────────────────
 
@@ -197,22 +196,4 @@ export function nextLessonOf(subjectId: string, after: ISODate): Lesson | undefi
     if (found) return found;
   }
   return undefined;
-}
-
-// ── Seeding ────────────────────────────────────────────────────────────────
-
-const scheduleMeta = defineDoc<{ seeded: boolean }>('scheduleMeta', { seeded: false });
-
-export function seedSchedule(): void {
-  if (scheduleMeta.value.value.seeded) return;
-  if (lessonTypes.all.value.length === 0) {
-    const d = (k: 'lecture' | 'practice' | 'lab' | 'seminar', color: string): [string, string, string] => [
-      t(`schedule.defaultTypes.${k}`),
-      t(`schedule.defaultTypes.${k}Short`),
-      color,
-    ];
-    const defaults = [d('lecture', 'c1'), d('practice', 'c2'), d('lab', 'c3'), d('seminar', 'c5')];
-    defaults.forEach(([name, short, color], order) => lessonTypes.add({ name, short, color, order }));
-  }
-  scheduleMeta.set({ seeded: true });
 }

@@ -3,6 +3,7 @@ import { CollectionScreen, NoteEditor, NotesHome, QuickNote } from './screens';
 
 export const notesFeature: FeatureDef = {
   id: 'notes',
+  module: 'notes',
   tab: { path: 'notes', label: 'app.tabs.notes', icon: 'notes', order: 40 },
   routes: [
     { pattern: 'notes', component: NotesHome },

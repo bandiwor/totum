@@ -101,8 +101,13 @@ export function MealPlanDayScreen({ params }: RouteProps) {
   const day = cycle?.days[index];
   if (!cycle || !day) return <Page title={t('schedule.day')} back><EmptyState icon="utensils" title={t('common.notFound')} /></Page>;
 
-  const setDay = (next: PlannedMeal[]): void => mealPlan.set({ cycle: { ...cycle, days: cycle.days.map((d, i) => (i === index ? next : d)) } });
-  const setMeal = (id: string, fn: (m: PlannedMeal) => PlannedMeal): void => setDay(day.map((m) => (m.id === id ? fn(m) : m)));
+  // Read the stored cycle at call time: sheets opened in a row ("add more") outlive this render.
+  const update = (fn: (meals: PlannedMeal[]) => PlannedMeal[]): void => {
+    const cur = mealPlan.value.value.cycle;
+    if (cur) mealPlan.set({ cycle: { ...cur, days: cur.days.map((d, i) => (i === index ? fn(d) : d)) } });
+  };
+  const setDay = (next: PlannedMeal[]): void => update(() => next);
+  const setMeal = (id: string, fn: (m: PlannedMeal) => PlannedMeal): void => update((meals) => meals.map((m) => (m.id === id ? fn(m) : m)));
 
   const editMeal = (meal: PlannedMeal | null): void =>
     void openSheet(
@@ -127,6 +132,7 @@ export function MealPlanDayScreen({ params }: RouteProps) {
               initial={f.portions[0]?.grams ?? 100}
               submitLabel={t('common.add')}
               onSubmit={(grams) => setMeal(meal.id, (m) => ({ ...m, items: [...m.items, { id: newId(), foodId: f.id, grams }] }))}
+              more={() => addItem(meal)}
               close={close}
             />
           ),

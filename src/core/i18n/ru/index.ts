@@ -6,5 +6,7 @@ import { training } from './training';
 import { nutrition } from './nutrition';
 import { money } from './money';
 import { notes } from './notes';
+import { languages, modules, packs, storage } from './system';
+import { sleep } from './sleep';
 
-export const ru = { common, time, units, cycle, backup, collections, app, today, quick, settings, plan, schedule, tasks, work, places, training, nutrition, money, notes } as const;
+export const ru = { common, time, units, cycle, backup, collections, app, today, quick, settings, plan, schedule, tasks, work, places, training, nutrition, money, notes, sleep, modules, languages, packs, storage } as const;

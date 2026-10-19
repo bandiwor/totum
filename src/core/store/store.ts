@@ -52,6 +52,7 @@ interface AnyCollection {
 
 interface AnyDoc {
   readonly name: string;
+  readonly defaults: object;
   hydrate(value: unknown): void;
   snapshot(): unknown;
 }
@@ -140,7 +141,7 @@ export class Doc<T extends object> implements AnyDoc {
 
   constructor(
     readonly name: string,
-    private readonly defaults: T,
+    readonly defaults: T,
   ) {
     this.state = signal<T>(defaults);
     this.value = this.state;
@@ -225,4 +226,8 @@ export async function replaceAll(data: DataSnapshot): Promise<void> {
 
 export function registeredCollections(): readonly AnyCollection[] {
   return [...collections.values()];
+}
+
+export function registeredDocs(): readonly AnyDoc[] {
+  return [...docs.values()];
 }

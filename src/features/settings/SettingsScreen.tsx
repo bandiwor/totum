@@ -1,7 +1,10 @@
 import { appVersion, applyUpdate, checkForUpdate, checkingUpdate, storagePersisted, updateReady } from '@/core/pwa';
 import { settings, type ThemePref } from '@/core/settings';
 import { Badge, Button, Card, List, ListRow, openSheet, Page, Section, SegmentedControl, Switch, toast } from '@/ui';
+import { navigate } from '@/core/router';
+import { languageById } from '@/core/i18n/languages';
 import { AccentPicker } from './AccentPicker';
+import { StorageSheet } from './StorageSheet';
 import { BackupsSheet, ExportSheet, ImportSheet } from './DataSheets';
 import { t } from '@/core/i18n';
 
@@ -17,8 +20,16 @@ export function SettingsScreen() {
 
   return (
     <Page title={t('settings.title')} back>
+      <Section title={t('settings.general')}>
+        <List>
+          <ListRow icon="layers" title={t('modules.title')} subtitle={t('modules.sub')} chevron onClick={() => navigate('settings/modules')} />
+          <ListRow icon="globe" title={t('languages.title')} value={languageById(s.language)?.name ?? ''} chevron onClick={() => navigate('settings/language')} />
+        </List>
+      </Section>
+
       <Section title={t('settings.data')}>
         <List>
+          <ListRow icon="package" title={t('packs.title')} subtitle={t('packs.sub')} chevron onClick={() => navigate('settings/packs')} />
           <ListRow icon="download" title={t('settings.export')} subtitle={t('settings.exportSub')} chevron onClick={() => openSheet(() => <ExportSheet />, { title: t('settings.export') })} />
           <ListRow icon="upload" title={t('settings.import')} subtitle={t('settings.importSub')} chevron onClick={() => openSheet((close) => <ImportSheet close={close} />, { title: t('settings.import') })} />
           <ListRow icon="history" title={t('settings.backups')} subtitle={t('settings.backupsSub')} chevron onClick={() => openSheet((close) => <BackupsSheet close={close} />, { title: t('settings.backups') })} />
@@ -58,7 +69,7 @@ export function SettingsScreen() {
               )
             }
           />
-          <ListRow icon="info" title={t('settings.storage')} value={storagePersisted.value ? <Badge tone="positive">{t('settings.storagePersistent')}</Badge> : <Badge>{t('settings.storageNormal')}</Badge>} />
+          <ListRow icon="info" title={t('settings.storage')} chevron onClick={() => openSheet(() => <StorageSheet />, { title: t('settings.storage') })} value={storagePersisted.value ? <Badge tone="positive">{t('settings.storagePersistent')}</Badge> : <Badge>{t('settings.storageNormal')}</Badge>} />
         </List>
       </Section>
     </Page>

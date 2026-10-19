@@ -6,6 +6,7 @@ import { places } from '@/features/places/model';
 import { cx, Icon } from '@/ui';
 import { useDayTimeline } from './useDayTimeline';
 import { t } from '@/core/i18n';
+import { navigate } from '@/core/router';
 
 type Row =
   | { kind: 'segment'; at: number; seg: TimelineSegment }
@@ -76,6 +77,14 @@ export function TimelineWidget({ date }: { date: ISODate }) {
               />
             );
           case 'travel':
+            if (seg.unknown) {
+              return (
+                <button type="button" key={`t-${seg.start}-${seg.to}`} class={cx('tl-travel is-unknown', past && 'is-past')} onClick={() => navigate('plan/places')}>
+                  <Icon name="navigation" size={14} />
+                  <span>{t('today.routeUnknown', { from: placeName(seg.from), to: placeName(seg.to) })}</span>
+                </button>
+              );
+            }
             return (
               <div key={`t-${seg.start}`} class={cx('tl-travel', seg.late > 0 && 'is-late', past && 'is-past')}>
                 <Icon name="navigation" size={14} />

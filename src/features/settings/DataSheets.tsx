@@ -8,33 +8,25 @@ import {
   type ImportPreview,
 } from '@/core/store/backup';
 import type { StoredBackup } from '@/core/store/idb';
-import { Button, confirm, EmptyState, List, ListRow, SheetActions, TextArea, toast } from '@/ui';
+import { Button, confirm, EmptyState, List, ListRow, SheetActions, toast } from '@/ui';
+import { copyText, JsonField, readClipboard } from './clipboard';
 import { t } from '@/core/i18n';
 import { formatDateTime } from '@/core/date';
 
-const formatBytes = (n: number): string =>
+export const formatBytes = (n: number): string =>
   n < 1024 ? t('units.bytes', { n }) : n < 1048576 ? t('units.kb', { n: (n / 1024).toFixed(1) }) : t('units.mb', { n: (n / 1048576).toFixed(1) });
 const formatStamp = formatDateTime;
 
 export function ExportSheet() {
   const [json] = useState(exportJSON);
-  const copy = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(json);
-      haptic('success');
-      toast(t('settings.copied'), { tone: 'success' });
-    } catch {
-      toast(t('settings.copyFailed'), { tone: 'error' });
-    }
-  };
   return (
     <>
       <p class="sheet-note">
         {t('settings.exportText', { size: formatBytes(new Blob([json]).size) })}
       </p>
-      <TextArea value={json} readOnly rows={8} class="mono" />
+      <JsonField value={json} readOnly />
       <SheetActions>
-        <Button variant="primary" size="lg" icon="copy" block feedback={false} onClick={copy}>
+        <Button variant="primary" size="lg" icon="copy" block feedback={false} onClick={() => void copyText(json)}>
           {t('settings.copy')}
         </Button>
       </SheetActions>
@@ -48,13 +40,11 @@ export function ImportSheet({ close }: { close: () => void }) {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
 
   const paste = async (): Promise<void> => {
-    try {
-      setText(await navigator.clipboard.readText());
-      setPreview(null);
-      setError(null);
-    } catch {
-      toast(t('settings.pasteFailed'), { tone: 'error' });
-    }
+    const pasted = await readClipboard();
+    if (pasted === null) return;
+    setText(pasted);
+    setPreview(null);
+    setError(null);
   };
 
   const check = (): void => {
@@ -86,7 +76,7 @@ export function ImportSheet({ close }: { close: () => void }) {
 
   return (
     <>
-      <TextArea
+      <JsonField
         value={text}
         onValue={(v) => {
           setText(v);
@@ -94,11 +84,6 @@ export function ImportSheet({ close }: { close: () => void }) {
           setError(null);
         }}
         placeholder={t('settings.pastePlaceholder')}
-        rows={6}
-        class="mono"
-        autoCapitalize="off"
-        autoCorrect="off"
-        spellcheck={false}
       />
       {error && <p class="sheet-error">{error}</p>}
       {preview && (

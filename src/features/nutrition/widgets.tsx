@@ -2,6 +2,7 @@ import { nowMinutes, today, type ISODate } from '@/core/date';
 import type { DayMeal } from './model';
 import { t } from '@/core/i18n';
 import type { AgendaItem, QuickActionContext } from '@/core/registry';
+import { isModuleOn } from '@/core/modules';
 
 import { Button, Card, Section } from '@/ui';
 import { fmtKcal, targets, waterTarget } from './actions';
@@ -38,11 +39,22 @@ function nextMeal(date: ISODate, meals: readonly DayMeal[]): DayMeal | undefined
 export function IntakeWidget({ date }: { date: ISODate }) {
   return (
     <Section title={t('nutrition.intakeTitle')}>
-      <Card>
-        <WaterControl date={date} />
-      </Card>
-      <IntakeChecklist date={date} />
+      <IntakeBlock date={date} />
     </Section>
+  );
+}
+
+/** Water and/or the supplements checklist — whichever of the two modules is on. */
+export function IntakeBlock({ date }: { date: ISODate }) {
+  return (
+    <>
+      {isModuleOn('water') && (
+        <Card>
+          <WaterControl date={date} />
+        </Card>
+      )}
+      {isModuleOn('intake') && <IntakeChecklist date={date} />}
+    </>
   );
 }
 
@@ -72,13 +84,9 @@ export function QuickFood({ close }: QuickActionContext) {
 }
 
 export function QuickIntake() {
-  const date = today();
   return (
     <div class="quick-stack">
-      <Card>
-        <WaterControl date={date} />
-      </Card>
-      <IntakeChecklist date={date} />
+      <IntakeBlock date={today()} />
     </div>
   );
 }
@@ -94,6 +102,7 @@ export function foodHint(): string | null {
 }
 
 export function intakeHint(): string | null {
+  if (!isModuleOn('water')) return null;
   return t('nutrition.waterOf', { ml: waterOn(today()), target: waterTarget() });
 }
 
@@ -109,16 +118,17 @@ export function foodRelevance(): number {
 }
 
 export function nutritionAgenda(date: ISODate): AgendaItem[] {
-  const meals = nutritionDay(date)
+  return nutritionDay(date)
     .meals.filter((m) => m.meal.time !== null)
     .map((m) => ({ id: m.meal.id, source: 'nutrition', title: m.meal.name, time: m.meal.time, done: m.state === 'done' }));
-  const intakes = intakeSlots(date).map((s) => ({
+}
+
+export function intakeAgenda(date: ISODate): AgendaItem[] {
+  return intakeSlots(date).map((s) => ({
     id: `${s.item.id}-${s.slot}`,
     source: 'intake',
     title: `${s.item.name} · ${doseLine(s.item)}`,
     time: s.time,
     done: !!s.entry,
   }));
-  return [...meals, ...intakes];
 }
-

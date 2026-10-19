@@ -111,8 +111,7 @@ export const goals = defineCollection<Goal>('goals', {
 export const goalSaved = (g: Goal): number => g.contributions.reduce((s, c) => s + c.amount, 0);
 
 /** `openingBalance` + every done transaction = current balance. */
-export const moneySettings = defineDoc<{ openingBalance: number; currency: string; seeded: boolean }>('money', {
+export const moneySettings = defineDoc<{ openingBalance: number; currency: string }>('money', {
   openingBalance: 0,
   currency: '₽',
-  seeded: false,
 });

@@ -6,7 +6,7 @@ import { ru } from './ru';
  *  - Keys are dot paths checked at compile time: t('plan.week.title').
  *  - `{name}` placeholders become required, typed params: t('tasks.left', { count: 3 }).
  *  - Plural entries ({ one, few, many, other }) pick a form via Intl.PluralRules using `count`.
- * `ru` is the source of truth; other locales must match `LocaleMessages`.
+ * `ru` is the source of truth; built-in locales must match `LocaleMessages`.
  */
 export type Dict = typeof ru;
 
@@ -40,30 +40,76 @@ export type PlainKey = { [K in MessageKey]: [MessageVars<At<Dict, K>>] extends [
 
 /** Shape other locales must implement (same keys, any wording). */
 export type LocaleMessages = DeepWiden<Dict>;
-type DeepWiden<T> = T extends string ? string : { readonly [K in keyof T]: DeepWiden<T[K]> };
+type DeepWiden<T> = T extends string ? string : T extends PluralForms ? PluralForms : { readonly [K in keyof T]: DeepWiden<T[K]> };
 
-export type Locale = 'ru';
-const locales: Record<Locale, LocaleMessages> = { ru };
-const intlTags: Record<Locale, string> = { ru: 'ru-RU' };
+/**
+ * The active language is a chain of message trees: the chosen language first,
+ * then its fallback (a complete language), then `ru`. Custom languages (see
+ * languages.ts) may be partial — missing keys come from the fallback.
+ */
+interface ActiveLocale {
+  /** BCP 47 tag for Intl (dates, numbers, plural rules). */
+  tag: string;
+  chain: readonly unknown[];
+}
 
-export const locale = signal<Locale>('ru');
-export const intlLocale = (): string => intlTags[locale.value];
+const active = signal<ActiveLocale>({ tag: 'ru-RU', chain: [ru] });
+
+export function setActiveLocale(tag: string, chain: readonly unknown[]): void {
+  active.value = { tag, chain: [...chain, ru] };
+}
+
+export const intlLocale = (): string => active.value.tag;
 
 const pluralRules = new Map<string, Intl.PluralRules>();
 function pluralCategory(n: number): Intl.LDMLPluralRule {
   const tag = intlLocale();
   let rules = pluralRules.get(tag);
-  if (!rules) pluralRules.set(tag, (rules = new Intl.PluralRules(tag)));
+  if (!rules) {
+    try {
+      rules = new Intl.PluralRules(tag);
+    } catch {
+      rules = new Intl.PluralRules('en');
+    }
+    pluralRules.set(tag, rules);
+  }
   return rules.select(n);
 }
 
-function lookup(key: string): unknown {
-  let node: unknown = locales[locale.value];
+function lookupIn(tree: unknown, key: string): unknown {
+  let node = tree;
   for (const part of key.split('.')) {
     if (typeof node !== 'object' || node === null) return undefined;
     node = (node as Record<string, unknown>)[part];
   }
   return node;
+}
+
+const isMessage = (x: unknown): boolean => typeof x === 'string' || (typeof x === 'object' && x !== null && typeof (x as PluralForms).other === 'string');
+
+function lookup(key: string): unknown {
+  for (const tree of active.value.chain) {
+    const hit = lookupIn(tree, key);
+    if (isMessage(hit)) return hit;
+  }
+  return undefined;
+}
+
+/** Every message key (dot path) of the source dictionary. */
+export function allMessageKeys(tree: unknown = ru, prefix = ''): string[] {
+  const out: string[] = [];
+  for (const [k, v] of Object.entries(tree as Record<string, unknown>)) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    if (isMessage(v)) out.push(key);
+    else if (typeof v === 'object' && v !== null) out.push(...allMessageKeys(v, key));
+  }
+  return out;
+}
+
+/** Share of source keys a message tree translates, 0..1. */
+export function coverage(tree: unknown): number {
+  const keys = allMessageKeys();
+  return keys.filter((k) => isMessage(lookupIn(tree, k))).length / keys.length;
 }
 
 function interpolate(template: string, params: Record<string, string | number> | undefined): string {

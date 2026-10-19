@@ -6,6 +6,7 @@ import { t } from '@/core/i18n';
 
 export const workFeature: FeatureDef = {
   id: 'work',
+  module: 'work',
   routes: [
     { pattern: 'plan/work', component: JobsScreen },
     { pattern: 'plan/work/:id', component: JobEditor },

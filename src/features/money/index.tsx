@@ -8,7 +8,7 @@ import { monthOf, monthTotals } from './logic';
 import { transactions } from './model';
 import { Operations, Overview } from './MoneyViews';
 import { CategoriesScreen, RecurringScreen } from './SetupScreens';
-import { fmtMoney, seedMoney, upcoming } from './state';
+import { fmtMoney, upcoming } from './state';
 import { openTransactionForm, TransactionForm } from './TransactionForm';
 
 type Tab = 'overview' | 'ops' | 'goals';
@@ -33,6 +33,7 @@ function MoneyScreen() {
 
 export const moneyFeature: FeatureDef = {
   id: 'money',
+  module: 'money',
   tab: { path: 'money', label: 'app.tabs.money', icon: 'wallet', order: 30 },
   routes: [
     { pattern: 'money', component: MoneyScreen },
@@ -64,5 +65,4 @@ export const moneyFeature: FeatureDef = {
           : [],
     },
   ],
-  onReady: seedMoney,
 };

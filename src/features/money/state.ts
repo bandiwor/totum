@@ -155,14 +155,3 @@ export function contribute(goal: Goal, amount: number): void {
 export function categoryName(id: string | null): string {
   return (id ? moneyCategories.get(id)?.name : undefined) ?? t('money.noCategory');
 }
-
-export function seedMoney(): void {
-  if (moneySettings.value.value.seeded) return;
-  if (moneyCategories.all.value.length === 0) {
-    const expense = ['food', 'cafe', 'transport', 'study', 'sport', 'health', 'subscriptions', 'shopping', 'fun', 'other'] as const;
-    const income = ['salary', 'sideJob', 'scholarship', 'gifts', 'otherIncome'] as const;
-    expense.forEach((k, i) => moneyCategories.add({ name: t(`money.defaults.${k}`), type: 'expense', color: `c${(i % 8) + 1}`, order: i }));
-    income.forEach((k, i) => moneyCategories.add({ name: t(`money.defaults.${k}`), type: 'income', color: `c${(i % 8) + 1}`, order: 100 + i }));
-  }
-  moneySettings.set({ seeded: true });
-}

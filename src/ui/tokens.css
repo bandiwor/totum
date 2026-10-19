@@ -29,7 +29,10 @@
   --radius-full: 999px;
 
   --tap: 44px;
-  --tabbar-h: 56px;
+  --tabbar-h: 60px;
+  /* The home indicator area is shorter than the full inset on iOS — native bars overlap it a bit. */
+  --tabbar-pad: max(calc(var(--safe-bottom) - 14px), 10px);
+  --tabbar-total: calc(var(--tabbar-h) + var(--tabbar-pad));
   --header-h: 52px;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
