@@ -22,6 +22,8 @@ export interface BusyBlock {
   continued?: boolean;
   /** Goes on past midnight: no trip home after it today. */
   continues?: boolean;
+  /** The end is an estimate (event of unknown length). */
+  endUnknown?: boolean;
 }
 
 export type TimelineSegment =

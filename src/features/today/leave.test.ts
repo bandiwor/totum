@@ -26,3 +26,21 @@ describe('nextDeparture', () => {
     expect(nextDeparture(segs, parseTime('13:55'))).toBeNull();
   });
 });
+
+describe('firstTrip', () => {
+  it('is the first departure from home, not the way back from a night shift', async () => {
+    const { firstTrip } = await import('./leave');
+    const day = buildTimeline(
+      [
+        { ...block('00:00', '06:00', 'cafe'), continued: true },
+        block('07:40', '15:55', 'mil'),
+      ],
+      { dayStart: 450, dayEnd: 1410, homeId: 'home', minHomeStay: 30, travel: (a, b) => (a !== b ? 30 : undefined), arriveEarly: 5 },
+    );
+    // Back home at 6:30 and already up: leaving at 7:05 works.
+    expect(firstTrip(day, 'home', 5)).toMatchObject({ leaveAt: parseTime('07:05'), late: 0, startsAt: parseTime('07:40') });
+    // A normal morning with the usual 7:30 wake-up would be 20 minutes late for it.
+    const normal = buildTimeline([block('07:40', '15:55', 'mil')], { dayStart: 450, dayEnd: 1410, homeId: 'home', minHomeStay: 30, travel: (a, b) => (a !== b ? 30 : undefined), arriveEarly: 5 });
+    expect(firstTrip(normal, 'home', 5)).toMatchObject({ leaveAt: parseTime('07:05'), late: 20 });
+  });
+});

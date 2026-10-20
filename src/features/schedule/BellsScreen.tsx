@@ -3,29 +3,11 @@ import { formatDuration, formatTime, type Minutes } from '@/core/date';
 import { haptic } from '@/core/haptics';
 import { t } from '@/core/i18n';
 import { Button, EmptyState, Field, Form, List, ListRow, NumberStepper, openSheet, Page, Section, SheetActions, TimeField, TimeRange } from '@/ui';
-import { bells, buildBells, timetables, type BellSlot } from './model';
+import { bells, buildBells, type BellSlot } from './model';
 
 function setSlots(slots: BellSlot[]): void {
   const sorted = [...slots].sort((a, b) => a.start - b.start);
   bells.set({ slots: sorted.map((s, i) => ({ ...s, n: i + 1 })) });
-  syncTimetables();
-}
-
-/** Lessons tied to a bell number follow the new times. */
-function syncTimetables(): void {
-  const byN = new Map(bells.value.value.slots.map((s) => [s.n, s]));
-  for (const tt of timetables.all.value) {
-    let changed = false;
-    const days = tt.cycle.days.map((day) =>
-      day.map((l) => {
-        const slot = l.bell !== null ? byN.get(l.bell) : undefined;
-        if (!slot || (slot.start === l.start && slot.end === l.end)) return l;
-        changed = true;
-        return { ...l, start: slot.start, end: slot.end };
-      }),
-    );
-    if (changed) timetables.update(tt.id, { cycle: { ...tt.cycle, days } });
-  }
 }
 
 function SlotForm({ index, close }: { index: number; close: () => void }) {

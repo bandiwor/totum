@@ -32,3 +32,18 @@ export function nextDeparture(segments: readonly TimelineSegment[], now: Minutes
   }
   return null;
 }
+
+/**
+ * The first trip from home that day (what the wake-up time is for) and whether
+ * the wake-up leaves enough time for it. Without a home, the first trip at all.
+ */
+export function firstTrip(segments: readonly TimelineSegment[], homeId: string | null, arriveEarly = 0): { leaveAt: Minutes; late: Minutes; title: string; startsAt: Minutes } | null {
+  const i = segments.findIndex((s) => s.kind === 'travel' && !s.unknown && (homeId === null || s.from === homeId));
+  const trip = segments[i];
+  const target = segments.slice(i + 1).find((s) => s.kind === 'busy');
+  if (i === -1 || !trip || trip.kind !== 'travel' || !target || target.kind !== 'busy') return null;
+  // When the awake window starts too late the trip is pushed back (lateness): then the
+  // required departure is computed from the start, the trip and the arrive-early buffer.
+  const leaveAt = trip.late > 0 ? target.start - (trip.end - trip.start) - arriveEarly : trip.start;
+  return { leaveAt, late: trip.late, title: target.block.title, startsAt: target.start };
+}

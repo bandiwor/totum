@@ -22,7 +22,7 @@ import {
   TextField,
 } from '@/ui';
 import { defaultLesson, LessonForm } from './LessonForm';
-import { subjects, sortedTimetables, timetableFor, timetables, lessonTypes, type TemplateLesson, type Timetable } from './model';
+import { subjects, sortedTimetables, timetableFor, timetables, lessonTypes, type TemplateLesson, type Timetable, nextLessonAfter, withBellTimes } from './model';
 import { t } from '@/core/i18n';
 
 function createTimetable(): void {
@@ -73,7 +73,8 @@ export function TimetablesScreen() {
 
 function daySummary(day: TemplateLesson[]): string {
   if (day.length === 0) return t('schedule.dayOff');
-  return [...day]
+  return day
+    .map(withBellTimes)
     .sort((a, b) => a.start - b.start)
     .map((l) => subjects.get(l.subjectId)?.name ?? '?')
     .join(', ');
@@ -171,12 +172,12 @@ export function TimetableDayEditor({ params }: RouteProps) {
   };
 
   const openForm = (lesson: TemplateLesson | null): void => {
-    const last = [...day].sort((a, b) => b.end - a.end)[0];
+    const last = day.map(withBellTimes).sort((a, b) => b.end - a.end)[0];
     const base = defaultLesson();
     openSheet(
       (close) => (
         <LessonForm
-          initial={lesson ?? (last ? { ...base, start: last.end + 10, end: last.end + 10 + (base.end - base.start), bell: last.bell !== null ? last.bell + 1 : null } : base)}
+          initial={lesson ? withBellTimes(lesson) : nextLessonAfter(last, base)}
           onSave={(data) => (lesson ? setDay(day.map((l) => (l.id === lesson.id ? { ...data, id: l.id } : l))) : setDay([...day, { ...data, id: newId() }]))}
           {...(lesson ? { onDelete: () => setDay(day.filter((l) => l.id !== lesson.id)) } : {})}
           close={close}
@@ -186,7 +187,7 @@ export function TimetableDayEditor({ params }: RouteProps) {
     );
   };
 
-  const sorted = [...day].sort((a, b) => a.start - b.start);
+  const sorted = day.map(withBellTimes).sort((a, b) => a.start - b.start);
   return (
     <Page title={cycleDayLabel(tt.cycle, index)} back actions={<Button size="sm" variant="ghost" icon="plus" onClick={() => openForm(null)}>{t('schedule.lesson')}</Button>}>
       {sorted.length === 0 ? (

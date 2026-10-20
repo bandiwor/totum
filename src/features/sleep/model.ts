@@ -2,6 +2,7 @@ import * as v from 'valibot';
 import { computed } from '@preact/signals';
 import { addDays, compareDates, fromLocalDate, today, type ISODate, type Minutes } from '@/core/date';
 import { settings } from '@/core/settings';
+import { wakeFor } from '@/core/dayWindow';
 import { entityFields, minutes } from '@/core/store/schema';
 import { defineCollection, type Entity } from '@/core/store/store';
 
@@ -157,16 +158,18 @@ export function totalOn(date: ISODate): number {
 
 // ── Actions ────────────────────────────────────────────────────────────────
 
-function plan(): { plannedBed: Minutes; plannedWake: Minutes } {
+/** The plan for a session starting now: usual bedtime, and the wake-up set for the morning it ends. */
+function plan(now: number = Date.now()): { plannedBed: Minutes; plannedWake: Minutes } {
   const s = settings.value.value;
-  return { plannedBed: s.dayEnd, plannedWake: s.dayStart };
+  const morning = clockOf(now) >= DAY / 2 ? addDays(dateOf(now), 1) : dateOf(now);
+  return { plannedBed: s.dayEnd, plannedWake: wakeFor(morning) };
 }
 
 /** "Ложусь спать" — at any time of day; restarts a session already in progress. */
 export function goToBed(now: number = Date.now()): SleepEntry {
   const cur = openSession.value;
   if (cur) return sleepLog.update(cur.id, { bedAt: now, asleepAt: null }) ?? cur;
-  return sleepLog.add({ ...plan(), bedAt: now, asleepAt: null, wakeAt: null });
+  return sleepLog.add({ ...plan(now), bedAt: now, asleepAt: null, wakeAt: null });
 }
 
 export interface SessionTimes {
@@ -188,7 +191,7 @@ export function fromClock(wakeDate: ISODate, wake: Minutes, asleep: Minutes, bed
 
 export function saveSession(id: string | null, times: SessionTimes): void {
   if (id) sleepLog.update(id, times);
-  else sleepLog.add({ ...plan(), ...times });
+  else sleepLog.add({ ...plan(times.bedAt), ...times });
 }
 
 /** Typical time to fall asleep (for defaults), 15 min without history. */

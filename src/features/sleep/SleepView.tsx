@@ -5,7 +5,9 @@ import { t } from '@/core/i18n';
 import type { QuickActionContext } from '@/core/registry';
 import { settings } from '@/core/settings';
 import { DayWindowForm } from '@/features/plan/SetupList';
-import { BarChart, Button, Card, DateField, EmptyState, Form, List, ListRow, openSheet, Section, SheetActions, Stat, TimeField } from '@/ui';
+import { openWakeForm, wakeHint } from '@/features/today/WakeForm';
+import { hasCustomWake, wakeFor } from '@/core/dayWindow';
+import { BarChart, Button, Card, DateField, EmptyState, Form, List, ListRow, openSheet, Section, SheetActions, Stat, TimeField, cx, Icon } from '@/ui';
 import {
   clockOf,
   dateOf,
@@ -121,6 +123,9 @@ export function SleepCard() {
       </Card>
     );
   }
+  // The morning the next sleep ends: tomorrow after noon, today before.
+  const morning = nowMinutes() >= 12 * 60 ? addDays(today(), 1) : today();
+  const hint = wakeHint(morning);
   const last = sortedSleep.value[0];
   const recent = last?.wakeAt != null && Date.now() - last.wakeAt < 6 * 3_600_000 ? last : undefined;
   return (
@@ -131,8 +136,14 @@ export function SleepCard() {
           <span class="sleep-card__text">{sessionSub(recent)}</span>
         </button>
       ) : (
-        <p class="sleep-card__text num">{t('sleep.planLine', { bed: formatTime(s.dayEnd), wake: formatTime(s.dayStart), duration: formatDuration(plannedDuration(s.dayEnd, s.dayStart)) })}</p>
+        <p class="sleep-card__text num">{t('sleep.planLine', { bed: formatTime(s.dayEnd), wake: formatTime(wakeFor(morning)), duration: formatDuration(plannedDuration(s.dayEnd, wakeFor(morning))) })}</p>
       )}
+      <button type="button" class={cx('sleep-card__wake', hasCustomWake(morning) && 'is-custom')} onClick={() => openWakeForm(morning)}>
+        <Icon name="sunrise" size={16} />
+        <span class="num">{morning === today() ? t('sleep.wakeToday', { time: formatTime(wakeFor(morning)) }) : t('today.tomorrowWake', { time: formatTime(wakeFor(morning)) })}</span>
+        <Icon name="chevronRight" size={16} />
+      </button>
+      {hint && <p class="sleep-card__text">{hint}</p>}
       <Button
         variant="primary"
         block

@@ -145,6 +145,13 @@ export const schedule = {
 };
 
 export const tasks = {
+  lasts: 'Lasts',
+  unknownLength: 'Not sure',
+  where: 'Where',
+  anywhere: 'Anywhere',
+  subject: 'Subject',
+  noSubject: 'none',
+  eventOpenEnd: 'end unknown',
   task: 'Task',
   tasks: 'Tasks',
   newTask: 'New task',

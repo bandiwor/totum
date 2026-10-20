@@ -153,6 +153,9 @@ collection "tasks" — to-dos and homework (homework = task with subjectId).
 - note: string ("" if none)
 - date: "YYYY-MM-DD" | null — due date; null = no date
 - time: minutes | null
+- duration: minutes | null — with a time, makes it an EVENT that takes time on the timeline (doctor 60, meet-up 180); null = a plain to-do
+- openEnded: boolean — true for an event of unknown length (shown with an unknown end, counted as ~1 h); false otherwise
+- placeId: place id | null — where the event happens (travel is planned to it); null = wherever I am
 - done: boolean — false
 - doneAt: null (epoch ms when done; keep null)
 - subjectId: subject id | null

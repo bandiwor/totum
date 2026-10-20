@@ -5,13 +5,16 @@ import type { BusyBlock, TimelineSegment } from '@/core/timeline';
 import { places } from '@/features/places/model';
 import { cx, Icon } from '@/ui';
 import { useDayTimeline } from './useDayTimeline';
+import { openWakeForm } from './WakeForm';
+import { hasCustomWake, wakeFor } from '@/core/dayWindow';
 import { t } from '@/core/i18n';
 import { navigate } from '@/core/router';
 
 type Row =
   | { kind: 'segment'; at: number; seg: TimelineSegment }
   | { kind: 'cancelled'; at: number; block: BusyBlock }
-  | { kind: 'now'; at: number };
+  | { kind: 'now'; at: number }
+  | { kind: 'wake'; at: number };
 
 const placeName = (id: string | null): string => (id ? (places.get(id)?.name ?? '') : '');
 
@@ -28,7 +31,7 @@ function BlockCard({ date, block, state }: { date: ISODate; block: BusyBlock; st
     >
       <span class="tl-block__time num">
         <span>{formatTime(block.start)}</span>
-        <span>{formatTime(block.end)}</span>
+        <span>{block.endUnknown ? '…' : formatTime(block.end)}</span>
       </span>
       <span class="tl-block__card">
         <span class="tl-block__title">{block.title}</span>
@@ -52,11 +55,23 @@ export function TimelineWidget({ date }: { date: ISODate }) {
     ...cancelled.map((block): Row => ({ kind: 'cancelled', at: block.start, block })),
   ];
   if (isToday) rows.push({ kind: 'now', at: now });
+  const wake = wakeFor(date);
+  // The wake-up sits in time order: after a night shift that ends at 6:00, not above it.
+  rows.push({ kind: 'wake', at: wake });
   rows.sort((a, b) => a.at - b.at || (a.kind === 'now' ? -1 : b.kind === 'now' ? 1 : 0));
 
   return (
     <div class="tl">
       {rows.map((row) => {
+        if (row.kind === 'wake') {
+          return (
+            <button key="wake" type="button" class={cx('tl-wake', hasCustomWake(date) && 'is-custom', isToday && wake < now && 'is-past')} onClick={() => openWakeForm(date)}>
+              <Icon name="sunrise" size={14} />
+              <span class="num">{formatTime(wake)}</span>
+              <span>{hasCustomWake(date) ? t('today.wakeCustom') : t('today.wake')}</span>
+            </button>
+          );
+        }
         if (row.kind === 'now') {
           return (
             <div key="now" class="tl-now">

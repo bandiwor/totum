@@ -1,5 +1,7 @@
 import { useState } from 'preact/hooks';
-import { addDays, formatRelativeDay, formatTime, today, type ISODate, type Minutes } from '@/core/date';
+import { addDays, formatDuration, formatRelativeDay, formatTime, today, type ISODate, type Minutes } from '@/core/date';
+import { PlacePicker } from '@/features/places/PlacePicker';
+import { places } from '@/features/places/model';
 import { haptic } from '@/core/haptics';
 import { fx } from '@/core/fx';
 import { activeSubjects, nextLessonOf } from '@/features/schedule/model';
@@ -23,7 +25,10 @@ import {
 import { tasks, type Task } from './model';
 import { t } from '@/core/i18n';
 
-type Draft = Pick<Task, 'title' | 'note' | 'date' | 'time' | 'subjectId' | 'lesson'>;
+type Draft = Pick<Task, 'title' | 'note' | 'date' | 'time' | 'duration' | 'openEnded' | 'placeId' | 'subjectId' | 'lesson'>;
+
+const DURATIONS: readonly Minutes[] = [30, 60, 120, 180];
+const OPEN = -1;
 
 export interface TaskFormProps {
   task?: Task;
@@ -38,10 +43,17 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
     note: task?.note ?? preset?.note ?? '',
     date: task ? task.date : (preset?.date ?? now),
     time: task?.time ?? preset?.time ?? null,
+    duration: task?.duration ?? preset?.duration ?? null,
+    openEnded: task?.openEnded ?? preset?.openEnded ?? false,
+    placeId: task?.placeId ?? preset?.placeId ?? null,
     subjectId: task?.subjectId ?? preset?.subjectId ?? null,
     lesson: task?.lesson ?? preset?.lesson ?? null,
   });
   const patch = (p: Partial<Draft>): void => setD((cur) => ({ ...cur, ...p }));
+  // Most tasks aren't about studies: the subject list stays folded unless it's homework.
+  const [subjectOpen, setSubjectOpen] = useState(d.subjectId !== null);
+  const subject = activeSubjects.value.find((x) => x.id === d.subjectId);
+  const isEvent = d.time !== null && (d.duration !== null || d.openEnded);
 
   const tomorrow = addDays(now, 1);
   const dateMode = d.lesson ? 'lesson' : d.date === now ? 'today' : d.date === tomorrow ? 'tomorrow' : d.date === null ? 'none' : 'pick';
@@ -81,7 +93,7 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
       case 'lesson':
         return nextLesson ? patch({ date: nextLesson.date, lesson: { date: nextLesson.date, key: nextLesson.key } }) : undefined;
       case 'none':
-        return patch({ date: null, time: null, lesson: null });
+        return patch({ date: null, time: null, duration: null, openEnded: false, lesson: null });
       case 'pick':
         return patch({ date: d.date ?? addDays(now, 2), lesson: null });
     }
@@ -97,16 +109,6 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
         enterKeyHint="done"
         onKeyDown={(e) => e.key === 'Enter' && save()}
       />
-      {activeSubjects.value.length > 0 && (
-        <Field label={t('tasks.subjectForHw')}>
-          <ChoiceChips
-            allowNone
-            options={activeSubjects.value.map((s) => ({ value: s.id, label: s.name, color: colorVar(s.color) }))}
-            value={d.subjectId}
-            onChange={(subjectId) => patch({ subjectId, lesson: subjectId === d.subjectId ? d.lesson : null })}
-          />
-        </Field>
-      )}
       <Field label={t('tasks.when')}>
         <ChoiceChips options={dateOptions} value={dateMode} onChange={setDateMode} />
       </Field>
@@ -116,11 +118,52 @@ export function TaskForm({ task, preset, close }: TaskFormProps) {
           <ListRow
             title={t('tasks.atTime')}
             {...(d.time !== null ? { subtitle: formatTime(d.time) } : {})}
-            trailing={<Switch label={t('tasks.atTime')} checked={d.time !== null} onChange={(on) => patch({ time: on ? 18 * 60 : null })} />}
+            trailing={
+              <Switch
+                label={t('tasks.atTime')}
+                checked={d.time !== null}
+                onChange={(on) => patch(on ? { time: 18 * 60 } : { time: null, duration: null, openEnded: false })}
+              />
+            }
           />
         </List>
       )}
-      {d.time !== null && !d.lesson && <TimeField value={d.time} onChange={(time: Minutes) => patch({ time })} />}
+      {d.time !== null && !d.lesson && (
+        <>
+          <TimeField value={d.time} onChange={(time: Minutes) => patch({ time })} />
+          <Field label={t('tasks.lasts')}>
+            <ChoiceChips
+              allowNone
+              options={[
+                ...DURATIONS.map((m) => ({ value: m, label: formatDuration(m) })),
+                { value: OPEN, label: t('tasks.unknownLength') },
+              ]}
+              value={d.openEnded ? OPEN : d.duration}
+              onChange={(v) => patch(v === OPEN ? { duration: null, openEnded: true } : { duration: v, openEnded: false })}
+            />
+          </Field>
+          {isEvent && places.all.value.length > 0 && (
+            <Field label={t('tasks.where')}>
+              <PlacePicker value={d.placeId} onChange={(placeId) => patch({ placeId })} noneLabel={t('tasks.anywhere')} />
+            </Field>
+          )}
+        </>
+      )}
+      {activeSubjects.value.length > 0 &&
+        (subjectOpen ? (
+          <Field label={t('tasks.subjectForHw')}>
+            <ChoiceChips
+              allowNone
+              options={activeSubjects.value.map((s) => ({ value: s.id, label: s.name, color: colorVar(s.color) }))}
+              value={d.subjectId}
+              onChange={(subjectId) => patch({ subjectId, lesson: subjectId === d.subjectId ? d.lesson : null })}
+            />
+          </Field>
+        ) : (
+          <List>
+            <ListRow icon="notes" title={t('tasks.subject')} value={subject?.name ?? t('tasks.noSubject')} chevron onClick={() => setSubjectOpen(true)} />
+          </List>
+        ))}
       <TextArea value={d.note} onValue={(note) => patch({ note })} placeholder={t('common.note')} rows={3} />
       <SheetActions>
         <Button variant="primary" size="lg" block disabled={!d.title.trim()} feedback={false} onClick={save}>

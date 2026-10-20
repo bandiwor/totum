@@ -145,6 +145,13 @@ export const schedule = {
 } as const;
 
 export const tasks = {
+  lasts: 'Длится',
+  unknownLength: 'Не знаю',
+  where: 'Где',
+  anywhere: 'Неважно',
+  subject: 'Предмет',
+  noSubject: 'нет',
+  eventOpenEnd: 'сколько продлится — неизвестно',
   task: 'Задача',
   tasks: 'Задачи',
   newTask: 'Новая задача',

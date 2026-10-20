@@ -65,3 +65,16 @@ describe('timetable resolution', () => {
     expect(t.segments.find((s) => s.kind === 'travel')?.start).toBe(480 - 5) // arrive 5 min early by default;
   });
 });
+
+describe('bell times', () => {
+  it('lessons tied to a bell follow the current bell grid, also one-off ones', async () => {
+    const { bells, nextLessonAfter } = await import('./model');
+    bells.set({ slots: [{ n: 1, start: 510, end: 590 }, { n: 2, start: 620, end: 700 }] });
+    // Stored copy says 1.5 h after a 10-minute break — the grid says otherwise.
+    const stale: TemplateLesson = { ...lesson('x', phys.id, 600), bell: 2 };
+    lessonOverrides.add(d('2026-11-03'), stale);
+    expect(lessonsFor(d('2026-11-03')).map((l) => [l.data.start, l.data.end])).toEqual([[620, 700]]);
+    expect(nextLessonAfter({ ...stale, bell: 1 }, stale)).toMatchObject({ bell: 2, start: 620, end: 700 });
+    bells.set({ slots: [] });
+  });
+});

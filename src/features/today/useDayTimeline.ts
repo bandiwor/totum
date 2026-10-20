@@ -3,6 +3,7 @@ import { useMemo } from 'preact/hooks';
 import type { ISODate } from '@/core/date';
 import { registry } from '@/core/registry';
 import { settings } from '@/core/settings';
+import { wakeFor } from '@/core/dayWindow';
 import { buildTimeline, summarizeFreeTime, type FreeTimeSummary, type TimelineSegment } from '@/core/timeline';
 import { homeId, travelMinutes } from '@/features/places/model';
 
@@ -14,7 +15,7 @@ export interface DayTimeline {
 export function dayTimeline(date: ISODate): DayTimeline {
   const s = settings.value.value;
   const segments = buildTimeline(registry.busyBlocks(date), {
-    dayStart: s.dayStart,
+    dayStart: wakeFor(date),
     dayEnd: s.dayEnd,
     homeId: homeId.value,
     minHomeStay: s.minHomeStay,

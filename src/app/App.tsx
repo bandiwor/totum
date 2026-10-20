@@ -97,6 +97,7 @@ export function App() {
   }, [match, tabHidden, defaultTab]);
 
   const Screen = match?.component;
+  const atTabRoot = registry.tabs().some((tab) => tab.path === current);
   if (!settings.value.value.onboarded) {
     return (
       <div class="app">
@@ -111,7 +112,8 @@ export function App() {
         {Screen && match && <ScreenStack current={current} Screen={Screen} params={match.params} dir={direction.value} />}
       </main>
       <UpdateBanner />
-      <button type="button" class="ui-fab" aria-label={t('app.quickActions')} onClick={openQuickMenu}>
+      {/* Only on tab roots: deeper screens have their own "+ New" and the big button would compete with it. */}
+      <button type="button" class={cx('ui-fab', !atTabRoot && 'is-hidden')} aria-label={t('app.quickActions')} aria-hidden={!atTabRoot} tabIndex={atTabRoot ? 0 : -1} onClick={openQuickMenu}>
         <Icon name="plus" size={28} />
       </button>
       <TabBar />

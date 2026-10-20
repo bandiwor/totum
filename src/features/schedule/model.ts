@@ -168,7 +168,16 @@ export interface Lesson {
   modified: boolean;
 }
 
-function toLesson(date: ISODate, key: string, data: LessonData, origin: Lesson['origin'], modified: boolean): Lesson {
+/** A lesson tied to a bell number always takes the current bell times (the stored ones are just a copy). */
+export function withBellTimes<T extends LessonData>(data: T): T {
+  if (data.bell === null) return data;
+  const slot = bells.value.value.slots.find((b) => b.n === data.bell);
+  // A bell number that no longer exists keeps its stored times.
+  return slot && (slot.start !== data.start || slot.end !== data.end) ? { ...data, start: slot.start, end: slot.end } : data;
+}
+
+function toLesson(date: ISODate, key: string, raw: LessonData, origin: Lesson['origin'], modified: boolean): Lesson {
+  const data = withBellTimes(raw);
   const subject = subjects.get(data.subjectId);
   return {
     key,
@@ -215,4 +224,14 @@ export function nextLessonOf(subjectId: string, after: ISODate): Lesson | undefi
     if (found) return found;
   }
   return undefined;
+}
+
+/** Defaults for the lesson after `last`: the next bell if there is one, otherwise the same length after a 10-minute break. */
+export function nextLessonAfter(last: LessonData | undefined, base: LessonData): LessonData {
+  if (!last) return base;
+  const prev = withBellTimes(last);
+  const slot = bells.value.value.slots.find((b) => b.start >= prev.end);
+  if (slot) return { ...base, bell: slot.n, start: slot.start, end: slot.end };
+  const length = base.end - base.start;
+  return { ...base, bell: null, start: Math.min(prev.end + 10, 1440 - length), end: Math.min(prev.end + 10 + length, 1440) };
 }

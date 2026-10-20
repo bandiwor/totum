@@ -1,4 +1,11 @@
 export const today = {
+  wake: 'Подъём',
+  wakeCustom: 'Подъём · только в этот день',
+  wakeTitle: 'Подъём {day}',
+  wakeUsual: 'Как обычно, в {time}',
+  wakeTooLate: 'Чтобы успеть на «{what}» к {time}, выходить нужно в {leave} — подъём стоит раньше.',
+  firstLeave: 'Первый выход в {leave} — «{what}».',
+  tomorrowWake: 'Подъём завтра в {time}',
   leaveNow: 'Пора выходить',
   leaveIn: 'Выходить через {duration}',
   leaveTo: 'До «{place}» {trip} · {what} в {time}',

@@ -1,4 +1,5 @@
 export const sleep = {
+  wakeToday: 'Подъём сегодня в {time}',
   title: 'Сон',
   goToBed: 'Ложусь спать',
   sleeping: 'Спишь',

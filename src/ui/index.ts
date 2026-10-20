@@ -10,3 +10,4 @@ export * from './CycleEditor';
 export * from './charts';
 export * from './ReorderList';
 export * from './Calendar';
+export * from './longPress';
